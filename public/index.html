@@ -460,4 +460,80 @@
                     statusText.textContent = '👨‍🍳 قيد التحضير';
                     msg = 'جاري تحضير طلبك، شكراً لصبرك';
                     break;
-                case '
+                case 'ready':
+                    statusBadge.classList.add('ready');
+                    statusText.textContent = '✅ جاهز للاستلام';
+                    msg = 'طلبك جاهز! يمكنك التوجه لاستلامه';
+                    break;
+                case 'completed':
+                    statusBadge.classList.add('completed');
+                    statusText.textContent = '📦 تم التسليم';
+                    msg = 'تم تسليم طلبك، نشكرك على زيارتك';
+                    break;
+                default:
+                    statusText.textContent = 'غير معروف';
+            }
+            
+            statusMessage.textContent = msg;
+            
+            const indicator = document.getElementById('notificationIndicator');
+            if (order.status === 'ready') {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+                notificationPlayed = false;
+            }
+        }
+
+        function resetSession() {
+            window.location.href = '/';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 Page loaded');
+            console.log('📱 Order ID:', orderId);
+            
+            if (orderId) {
+                localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
+                initSocket();
+                updateStatus('success', '🟢 جاهز');
+                
+                setTimeout(() => {
+                    showPopupNotification('☕ مرحباً بك!', 'سيتم تحديث حالتك تلقائياً عند تغييرها', 'info', '👋');
+                }, 2000);
+                
+            } else {
+                const savedOrder = localStorage.getItem('currentOrder');
+                if (savedOrder) {
+                    const savedOrderId = JSON.parse(savedOrder).id;
+                    if (savedOrderId) {
+                        window.location.href = `/?order=${savedOrderId}`;
+                        return;
+                    }
+                }
+                
+                document.getElementById('loadingScreen').innerHTML = `
+                    <div class="text-center p-8">
+                        <div class="text-6xl mb-4">☕</div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">مرحباً بك!</h2>
+                        <p class="text-gray-600">لم يتم العثور على طلب</p>
+                        <p class="text-sm text-gray-500 mt-2">يرجى مسح رمز QR الخاص بطلبك</p>
+                        <div class="mt-6 flex flex-col gap-3">
+                            <a href="/dashboard.html" class="inline-block text-purple-600 hover:underline">📋 لوحة التحكم</a>
+                            <button onclick="window.location.href='/?order=ORD-1001'" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                                🔄 تجربة طلب تجريبي (ORD-1001)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (orderId) {
+                localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
+            }
+        });
+    </script>
+</body>
+</html>
