@@ -1,7 +1,7 @@
 {
   "name": "coffee-queue-system",
-  "version": "3.0.0",
-  "description": "Smart Coffee Queue System with Firebase Notifications",
+  "version": "2.0.0",
+  "description": "Digital Boarding Pass Queue System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -20,9 +20,7 @@
     "jsonwebtoken": "^9.0.2",
     "uuid": "^9.0.1",
     "compression": "^1.7.4",
-    "express-validator": "^7.0.1",
-    "firebase-admin": "^11.10.1",
-    "node-cron": "^3.0.2"
+    "express-validator": "^7.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
