@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>بطاقة طلب المقهى</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/style.css">
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        /* جميع الستايلات السابقة مع الإشعارات الداخلية */
+        /* ===== إشعارات منبثقة ===== */
         .notification-popup {
             position: fixed;
             top: 20px;
@@ -20,29 +21,41 @@
             padding: 20px 30px;
             border-radius: 20px;
             z-index: 999999;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             max-width: 90%;
             width: 420px;
             text-align: center;
             animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            border: 2px solid rgba(255,255,255,0.2);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(20px);
             cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .notification-popup.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .notification-popup.info { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+        .notification-popup:hover { transform: translateX(-50%) scale(1.02); }
         .notification-popup .notif-icon { font-size: 48px; display: block; margin-bottom: 8px; }
         .notification-popup .notif-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
         .notification-popup .notif-body { font-size: 16px; opacity: 0.9; }
+        .notification-popup .notif-time { font-size: 12px; opacity: 0.7; margin-top: 8px; }
         .notification-popup .notif-close {
             position: absolute; top: 8px; right: 12px;
             background: rgba(255,255,255,0.2); border: none; color: white;
-            width: 30px; height: 30px; border-radius: 50%;
-            cursor: pointer;
+            width: 30px; height: 30px; border-radius: 50%; font-size: 16px;
+            cursor: pointer; transition: background 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
         }
+        .notification-popup .notif-close:hover { background: rgba(255,255,255,0.3); }
+        .notification-popup.success { background: linear-gradient(135deg, #10b981, #059669); animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55), pulse-glow 2s infinite; }
+        .notification-popup.info { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+        .notification-popup.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .notification-popup.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
         @keyframes popIn {
             0% { opacity: 0; transform: translateX(-50%) scale(0.5) rotate(-10deg); }
             100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 20px 60px rgba(16, 185, 129, 0.3); }
+            50% { box-shadow: 0 20px 80px rgba(16, 185, 129, 0.6); }
+            100% { box-shadow: 0 20px 60px rgba(16, 185, 129, 0.3); }
         }
         .notification-badge {
             position: fixed; top: 10px; right: 10px;
@@ -50,7 +63,8 @@
             width: 30px; height: 30px; display: none;
             align-items: center; justify-content: center;
             font-size: 14px; font-weight: 700; z-index: 99999;
-            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+            animation: pulse-badge 1.5s infinite; cursor: pointer;
         }
         .notification-badge.show { display: flex; }
         .sound-icon {
@@ -66,7 +80,6 @@
     </style>
 </head>
 <body>
-    <!-- شاشة التحميل -->
     <div id="loadingScreen" class="loading-screen">
         <div class="text-center">
             <div class="loader"></div>
@@ -74,7 +87,6 @@
         </div>
     </div>
     
-    <!-- بطاقة الصعود -->
     <div id="customerScreen" class="boarding-pass-wrapper" style="display: none;">
         <div class="boarding-pass">
             <div class="boarding-pass-inner">
@@ -130,34 +142,28 @@
         </div>
     </div>
     
-    <!-- شاشة اكتمال الطلب -->
     <div id="completedScreen" class="completed-screen" style="display: none;">
         <div class="completed-content">
             <span class="big-emoji">🎉</span>
             <h1>شكراً لزيارتك!</h1>
             <p>تم تسليم طلبك بنجاح</p>
+            <p style="margin-top: 4px;">نتمنى أن تستمتع بمشروبك ☕</p>
             <button onclick="resetSession()" class="btn-reset">طلب جديد</button>
         </div>
     </div>
 
-    <!-- عداد الإشعارات -->
     <div id="notificationBadge" class="notification-badge" onclick="showAllNotifications()">
         <span id="badgeCount">0</span>
     </div>
 
-    <!-- أيقونة الصوت -->
     <div id="soundIcon" class="sound-icon">🔊</div>
 
-    <!-- شريط الحالة -->
     <div id="statusBar" class="status-bar">
         <span class="dot green" id="statusDot"></span>
         <span id="statusText2">🟢 جاهز</span>
     </div>
 
     <script>
-        // ============================================
-        // المتغيرات العامة
-        // ============================================
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('order');
         let socket = null;
@@ -184,49 +190,112 @@
                 <div class="notif-body">${message}</div>
                 <div class="notif-time">${new Date().toLocaleTimeString('ar-EG')}</div>
             `;
+            popup.onclick = function(e) {
+                if (e.target.tagName !== 'BUTTON') {
+                    this.style.transform = 'translateX(-50%) scale(0.9)';
+                    this.style.opacity = '0';
+                    setTimeout(() => this.remove(), 300);
+                }
+            };
             document.body.appendChild(popup);
             
             setTimeout(() => {
                 if (popup.parentElement) {
+                    popup.style.transform = 'translateX(-50%) scale(0.9)';
                     popup.style.opacity = '0';
                     setTimeout(() => popup.remove(), 300);
                 }
-            }, 8000);
+            }, 10000);
             
-            playSound();
+            playNotificationSound();
             triggerVibration();
+            updateBadge();
+        }
+
+        function updateBadge() {
+            const badge = document.getElementById('notificationBadge');
+            const count = document.getElementById('badgeCount');
+            if (notificationCount > 0) {
+                badge.classList.add('show');
+                count.textContent = notificationCount;
+            } else {
+                badge.classList.remove('show');
+            }
         }
 
         function showAllNotifications() {
             if (notifications.length === 0) return;
-            let html = notifications.map(n => `
-                <div style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;">
-                    <div style="font-weight:600;">${n.icon} ${n.title}</div>
-                    <div style="font-size:13px;color:#64748b;">${n.message}</div>
-                </div>
-            `).join('');
-            alert('📋 الإشعارات:\n\n' + notifications.map(n => `${n.icon} ${n.title}: ${n.message}`).join('\n'));
+            let html = '<div style="padding:10px;max-height:300px;overflow-y:auto;">';
+            notifications.forEach(n => {
+                html += `
+                    <div style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;">
+                        <div style="font-weight:600;">${n.icon} ${n.title}</div>
+                        <div style="font-size:13px;color:#64748b;">${n.message}</div>
+                        <div style="font-size:11px;color:#94a3b8;">${n.time.toLocaleTimeString('ar-EG')}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            const existing = document.querySelectorAll('.in-app-notification');
+            existing.forEach(el => el.remove());
+            const notif = document.createElement('div');
+            notif.className = 'in-app-notification info';
+            notif.style.maxHeight = '400px';
+            notif.style.overflow = 'auto';
+            notif.innerHTML = `
+                <div style="font-weight:700;font-size:18px;margin-bottom:10px;">📋 قائمة الإشعارات</div>
+                ${html}
+                <button onclick="this.parentElement.remove()" style="margin-top:10px;background:rgba(255,255,255,0.2);border:none;color:white;padding:6px 20px;border-radius:20px;cursor:pointer;">إغلاق</button>
+                <button onclick="clearNotifications()" style="margin-top:10px;margin-right:8px;background:rgba(239,68,68,0.3);border:none;color:white;padding:6px 20px;border-radius:20px;cursor:pointer;">🗑️ مسح الكل</button>
+            `;
+            document.body.appendChild(notif);
+        }
+
+        function clearNotifications() {
+            notificationCount = 0;
+            notifications = [];
+            document.getElementById('notificationBadge').classList.remove('show');
+            const existing = document.querySelectorAll('.in-app-notification');
+            existing.forEach(el => el.remove());
         }
 
         // ============================================
         // الصوت والاهتزاز
         // ============================================
-        function playSound() {
+        function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                [880, 660, 1100].forEach((freq, i) => {
-                    setTimeout(() => {
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.connect(gain);
-                        gain.connect(audioCtx.destination);
-                        osc.frequency.value = freq;
-                        osc.type = 'sine';
-                        gain.gain.value = 0.3;
-                        osc.start();
-                        setTimeout(() => osc.stop(), 200);
-                    }, i * 150);
-                });
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.frequency.value = 880;
+                osc1.type = 'sine';
+                gain1.gain.value = 0.3;
+                osc1.start();
+                setTimeout(() => osc1.stop(), 200);
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.frequency.value = 660;
+                    osc2.type = 'sine';
+                    gain2.gain.value = 0.3;
+                    osc2.start();
+                    setTimeout(() => osc2.stop(), 200);
+                }, 150);
+                setTimeout(() => {
+                    const osc3 = audioCtx.createOscillator();
+                    const gain3 = audioCtx.createGain();
+                    osc3.connect(gain3);
+                    gain3.connect(audioCtx.destination);
+                    osc3.frequency.value = 1100;
+                    osc3.type = 'sine';
+                    gain3.gain.value = 0.3;
+                    osc3.start();
+                    setTimeout(() => osc3.stop(), 300);
+                }, 350);
                 const soundIcon = document.getElementById('soundIcon');
                 soundIcon.classList.add('show');
                 setTimeout(() => soundIcon.classList.remove('show'), 1000);
@@ -234,48 +303,116 @@
         }
 
         function triggerVibration() {
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 400]);
+            }
+            document.body.style.transition = 'background 0.1s';
             document.body.style.background = 'rgba(16, 185, 129, 0.15)';
-            setTimeout(() => document.body.style.background = '', 300);
-            setTimeout(() => document.body.style.background = 'rgba(16, 185, 129, 0.15)', 400);
-            setTimeout(() => document.body.style.background = '', 500);
+            setTimeout(() => { document.body.style.background = ''; }, 300);
+            setTimeout(() => { document.body.style.background = 'rgba(16, 185, 129, 0.15)'; }, 400);
+            setTimeout(() => { document.body.style.background = ''; }, 500);
+        }
+
+        // ============================================
+        // تحديث الحالة
+        // ============================================
+        function updateStatus(status, message) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText2');
+            dot.className = 'dot';
+            if (status === 'success') {
+                dot.classList.add('green');
+                text.textContent = '✅ ' + message;
+            } else if (status === 'error') {
+                dot.classList.add('red');
+                text.textContent = '❌ ' + message;
+            } else {
+                dot.classList.add('yellow');
+                text.textContent = '⏳ ' + message;
+            }
         }
 
         // ============================================
         // Socket.io
         // ============================================
         function initSocket() {
-            socket = io();
-            socket.on('connect', () => {
-                console.log('✅ Connected');
-                if (orderId) socket.emit('join-order', orderId);
+            socket = io({
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 1000
             });
+            
+            socket.on('connect', () => {
+                console.log('✅ Connected to server');
+                updateStatus('success', '🟢 متصل');
+                if (orderId) {
+                    socket.emit('join-order', orderId);
+                }
+            });
+            
             socket.on('order-status', (order) => {
+                console.log('📦 Order update:', order);
                 const oldStatus = orderData ? orderData.status : null;
                 orderData = order;
                 updateUI(order);
-                if (oldStatus && oldStatus !== order.status && order.status !== 'completed') {
-                    const msgs = {
+                
+                if (oldStatus && oldStatus !== order.status) {
+                    const statusMessages = {
                         'waiting': '⏳ طلبك في قائمة الانتظار',
                         'preparing': '👨‍🍳 بدأ تحضير طلبك',
-                        'ready': '✅ طلبك جاهز للاستلام!'
+                        'ready': '✅ طلبك جاهز للاستلام!',
+                        'completed': '📦 تم تسليم طلبك'
                     };
                     const titles = {
                         'waiting': '⏳ في الانتظار',
                         'preparing': '👨‍🍳 بدأ التحضير',
-                        'ready': '☕ طلبك جاهز!'
+                        'ready': '☕ طلبك جاهز!',
+                        'completed': '📦 تم التسليم'
                     };
-                    showPopupNotification(titles[order.status] || '☕ تحديث', msgs[order.status] || '', 
-                        order.status === 'ready' ? 'success' : 'info', 
-                        order.status === 'ready' ? '🎉' : '📢');
+                    const icons = {
+                        'waiting': '⏳',
+                        'preparing': '👨‍🍳',
+                        'ready': '☕',
+                        'completed': '📦'
+                    };
+                    
+                    if (order.status !== 'completed') {
+                        showPopupNotification(
+                            titles[order.status] || '☕ تحديث',
+                            statusMessages[order.status] || '',
+                            order.status === 'ready' ? 'success' : 'info',
+                            icons[order.status] || '📢'
+                        );
+                    }
                 }
+                
                 if (order.status === 'ready' && !notificationPlayed) {
-                    showPopupNotification('☕ طلبك جاهز!', `طلب رقم ${order.number} (${order.customerName}) جاهز`, 'success', '🎉');
+                    showPopupNotification(
+                        '☕ طلبك جاهز!',
+                        `طلب رقم ${order.number} (${order.customerName}) جاهز للاستلام`,
+                        'success',
+                        '🎉'
+                    );
                     notificationPlayed = true;
                 }
             });
+            
+            socket.on('disconnect', () => {
+                console.log('🔌 Disconnected');
+                updateStatus('error', '🔴 غير متصل');
+            });
+            
+            socket.on('reconnect', () => {
+                console.log('🔄 Reconnected');
+                updateStatus('success', '🟢 متصل');
+                if (orderId) {
+                    socket.emit('join-order', orderId);
+                }
+            });
+            
             socket.on('error', (data) => {
-                showPopupNotification('⚠️ خطأ', data.message || 'حدث خطأ', 'error', '❌');
+                console.error('❌ Socket error:', data);
+                showPopupNotification('⚠️ خطأ', data.message || 'حدث خطأ في الاتصال', 'error', '❌');
             });
         }
 
@@ -284,58 +421,43 @@
         // ============================================
         function updateUI(order) {
             document.getElementById('loadingScreen').style.display = 'none';
+            
             if (order.status === 'completed') {
                 document.getElementById('customerScreen').style.display = 'none';
                 document.getElementById('completedScreen').style.display = 'flex';
                 return;
             }
+            
             document.getElementById('customerScreen').style.display = 'flex';
             document.getElementById('completedScreen').style.display = 'none';
+            
             document.getElementById('orderNumber').textContent = order.number;
             document.getElementById('customerName').textContent = order.customerName;
             document.getElementById('orderDetails').textContent = order.orderDetails;
-            document.getElementById('orderTime').textContent = new Date(order.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            if (order.qrCode) document.getElementById('qrCodeImage').src = order.qrCode;
             
-            const badge = document.getElementById('statusBadge');
-            const text = document.getElementById('statusText');
-            const msg = document.getElementById('statusMessage');
-            badge.className = 'status-badge';
-            let m = '';
+            const date = new Date(order.timestamp);
+            document.getElementById('orderTime').textContent = date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            
+            if (order.qrCode) {
+                document.getElementById('qrCodeImage').src = order.qrCode;
+            }
+            
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            statusBadge.className = 'status-badge';
+            let msg = '';
+            
             switch(order.status) {
-                case 'waiting': badge.classList.add('waiting'); text.textContent = '⏳ في الانتظار'; m = 'طلبك في قائمة الانتظار'; break;
-                case 'preparing': badge.classList.add('preparing'); text.textContent = '👨‍🍳 قيد التحضير'; m = 'جاري تحضير طلبك'; break;
-                case 'ready': badge.classList.add('ready'); text.textContent = '✅ جاهز للاستلام'; m = 'طلبك جاهز!'; break;
-                case 'completed': badge.classList.add('completed'); text.textContent = '📦 تم التسليم'; m = 'تم تسليم طلبك'; break;
-            }
-            msg.textContent = m;
-            
-            const indicator = document.getElementById('notificationIndicator');
-            if (order.status === 'ready') {
-                indicator.classList.add('show');
-            } else {
-                indicator.classList.remove('show');
-                notificationPlayed = false;
-            }
-        }
-
-        function resetSession() { window.location.href = '/'; }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            if (orderId) {
-                initSocket();
-                setTimeout(() => showPopupNotification('☕ مرحباً!', 'سيتم تحديث حالتك تلقائياً', 'info', '👋'), 2000);
-            } else {
-                document.getElementById('loadingScreen').innerHTML = `
-                    <div class="text-center p-8">
-                        <div class="text-6xl mb-4">☕</div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">مرحباً بك!</h2>
-                        <p class="text-gray-600">لم يتم العثور على طلب</p>
-                        <a href="/dashboard.html" class="inline-block text-purple-600 hover:underline">📋 لوحة التحكم</a>
-                    </div>
-                `;
-            }
-        });
-    </script>
-</body>
-</html>
+                case 'waiting':
+                    statusBadge.classList.add('waiting');
+                    statusText.textContent = '⏳ في الانتظار';
+                    msg = 'طلبك في قائمة الانتظار، سيبدأ تحضيره قريباً';
+                    break;
+                case 'preparing':
+                    statusBadge.classList.add('preparing');
+                    statusText.textContent = '👨‍🍳 قيد التحضير';
+                    msg = 'جاري تحضير طلبك، شكراً لصبرك';
+                    break;
+                case '
