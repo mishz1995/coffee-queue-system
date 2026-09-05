@@ -12,11 +12,3 @@
 - ✅ دعم الوضع المظلم (Dark Mode)
 
 ## التشغيل
-
-```bash
-# تثبيت الاعتماديات
-cd server
-npm install
-
-# تشغيل السيرفر
-npm start
