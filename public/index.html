@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>بطاقة طلب المقهى</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="loadingScreen" class="loading-screen">
+        <div class="text-center">
+            <div class="loader"></div>
+            <p class="text-gray-600">جاري تحميل طلبك...</p>
+        </div>
+    </div>
+    
+    <div id="customerScreen" class="boarding-pass-wrapper" style="display: none;">
+        <div class="boarding-pass">
+            <div class="boarding-pass-inner">
+                <div class="shop-header">
+                    <div>
+                        <div class="pass-type">بطاقة طلب</div>
+                        <div class="shop-name"><span class="emoji">☕</span> مقهى السعادة</div>
+                    </div>
+                    <div class="order-number-container">
+                        <div class="order-number-label">رقم الطلب</div>
+                        <div class="order-number-display" id="orderNumber">0000</div>
+                    </div>
+                </div>
+                
+                <div class="status-section">
+                    <div id="statusBadge" class="status-badge waiting">
+                        <span id="statusText">في الانتظار</span>
+                    </div>
+                    <div id="statusMessage" class="status-message"></div>
+                </div>
+                
+                <div class="order-details">
+                    <div class="detail-row">
+                        <span class="detail-label">اسم العميل</span>
+                        <span class="detail-value" id="customerName">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">تفاصيل الطلب</span>
+                        <span class="detail-value" id="orderDetails">-</span>
+                    </div>
+                </div>
+                
+                <div class="time-section">
+                    <span>🕐 وقت الطلب</span>
+                    <span class="time-value" id="orderTime">-</span>
+                </div>
+                
+                <div class="barcode-divider"></div>
+                
+                <div class="qr-section">
+                    <div class="qr-container">
+                        <img id="qrCodeImage" src="" alt="QR Code">
+                    </div>
+                    <div class="qr-label">امسح الرمز لمتابعة طلبك</div>
+                </div>
+                
+                <div id="notificationIndicator" class="notification-indicator">
+                    <div class="icon">🔔</div>
+                    <div class="title">طلبك جاهز!</div>
+                    <div class="subtitle">سيتم تشغيل التنبيه والاهتزاز</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center text-xs text-gray-400">
+            <span>🔄 يتم التحديث تلقائياً</span>
+        </div>
+    </div>
+    
+    <div id="completedScreen" class="completed-screen" style="display: none;">
+        <div class="completed-content">
+            <span class="big-emoji">🎉</span>
+            <h1>شكراً لزيارتك!</h1>
+            <p>تم تسليم طلبك بنجاح</p>
+            <p style="margin-top: 4px;">نتمنى أن تستمتع بمشروبك ☕</p>
+            <button onclick="resetSession()" class="btn-reset">طلب جديد</button>
+        </div>
+    </div>
+
+    <div id="statusBar" class="status-bar">
+        <span class="dot green" id="statusDot"></span>
+        <span id="statusText2">🟢 جاهز</span>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order');
+        let socket = null;
+        let orderData = null;
+        let notificationPlayed = false;
+
+        function showInAppNotification(title, message, type = 'info') {
+            const existing = document.querySelectorAll('.in-app-notification');
+            existing.forEach(el => el.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `in-app-notification ${type}`;
+            const icons = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' };
+            
+            notification.innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+                    <span style="font-size:28px;">${icons[type] || '📢'}</span>
+                    <div style="text-align:right;">
+                        <div class="notif-title">${title}</div>
+                        <div class="notif-body">${message}</div>
+                    </div>
+                </div>
+                <button class="notif-close" onclick="this.parentElement.remove()">إغلاق ✕</button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideUp 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 8000);
+        }
+
+        function updateStatus(status, message) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText2');
+            
+            dot.className = 'dot';
+            if (status === 'success') {
+                dot.classList.add('green');
+                text.textContent = '✅ ' + message;
+            } else if (status === 'error') {
+                dot.classList.add('red');
+                text.textContent = '❌ ' + message;
+            } else {
+                dot.classList.add('yellow');
+                text.textContent = '⏳ ' + message;
+            }
+        }
+
+        function playSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.frequency.value = 800;
+                osc1.type = 'square';
+                gain1.gain.value = 0.15;
+                osc1.start();
+                setTimeout(() => osc1.stop(), 400);
+                
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.frequency.value = 1000;
+                    osc2.type = 'square';
+                    gain2.gain.value = 0.15;
+                    osc2.start();
+                    setTimeout(() => osc2.stop(), 300);
+                }, 300);
+                
+                setTimeout(() => {
+                    const osc3 = audioCtx.createOscillator();
+                    const gain3 = audioCtx.createGain();
+                    osc3.connect(gain3);
+                    gain3.connect(audioCtx.destination);
+                    osc3.frequency.value = 1200;
+                    osc3.type = 'square';
+                    gain3.gain.value = 0.15;
+                    osc3.start();
+                    setTimeout(() => osc3.stop(), 400);
+                }, 600);
+            } catch (e) {
+                console.log('⚠️ Audio not available');
+            }
+        }
+
+        function triggerVibration() {
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 400]);
+            }
+            
+            const body = document.body;
+            body.style.transition = 'background 0.1s';
+            body.style.background = 'rgba(16, 185, 129, 0.1)';
+            setTimeout(() => { body.style.background = ''; }, 500);
+            setTimeout(() => { body.style.background = 'rgba(16, 185, 129, 0.1)'; }, 600);
+            setTimeout(() => { body.style.background = ''; }, 700);
+        }
+
+        function playNotificationWithAlert() {
+            playSound();
+            triggerVibration();
+            
+            if (orderData && orderData.status === 'ready') {
+                showInAppNotification(
+                    '☕ طلبك جاهز!',
+                    `طلب رقم ${orderData.number} (${orderData.customerName}) جاهز للاستلام`,
+                    'success'
+                );
+            }
+        }
+
+        async function setupPushNotifications() {
+            try {
+                if (!('serviceWorker' in navigator)) {
+                    console.log('⚠️ Service Worker not supported');
+                    return;
+                }
+                
+                const registration = await navigator.serviceWorker.register('/service-worker.js');
+                console.log('✅ Service Worker registered');
+                
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    console.log('✅ Notification permission granted');
+                    updateStatus('success', 'الإشعارات مفعلة');
+                    
+                    setTimeout(() => {
+                        showInAppNotification('☕ مرحباً!', 'ستصلك التنبيهات عند تحديث طلبك', 'info');
+                    }, 2000);
+                } else {
+                    console.log('❌ Notification permission denied');
+                    updateStatus('error', 'الرجاء السماح بالإشعارات');
+                }
+            } catch (error) {
+                console.error('❌ Setup error:', error);
+                updateStatus('error', 'خطأ في الإشعارات');
+            }
+        }
+
+        function initSocket() {
+            socket = io({
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 1000
+            });
+            
+            socket.on('connect', () => {
+                console.log('✅ Connected to server');
+                updateStatus('success', '🟢 متصل');
+                
+                if (orderId) {
+                    socket.emit('join-order', orderId);
+                }
+            });
+            
+            socket.on('order-status', (order) => {
+                console.log('📦 Order update:', order);
+                const oldStatus = orderData ? orderData.status : null;
+                orderData = order;
+                updateUI(order);
+                
+                if (oldStatus && oldStatus !== order.status) {
+                    const statusMessages = {
+                        'waiting': '⏳ طلبك في قائمة الانتظار',
+                        'preparing': '👨‍🍳 بدأ تحضير طلبك',
+                        'ready': '✅ طلبك جاهز للاستلام!',
+                        'completed': '📦 تم تسليم طلبك'
+                    };
+                    
+                    const titles = {
+                        'waiting': '⏳ في الانتظار',
+                        'preparing': '👨‍🍳 بدأ التحضير',
+                        'ready': '☕ طلبك جاهز!',
+                        'completed': '📦 تم التسليم'
+                    };
+                    
+                    if (order.status !== 'completed') {
+                        showInAppNotification(
+                            titles[order.status] || '☕ تحديث',
+                            statusMessages[order.status] || '',
+                            order.status === 'ready' ? 'success' : 'info'
+                        );
+                        
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            try {
+                                new Notification(titles[order.status] || '☕ تحديث', {
+                                    body: statusMessages[order.status] || '',
+                                    icon: '☕',
+                                    vibrate: [200, 100, 200]
+                                });
+                            } catch(e) {}
+                        }
+                    }
+                }
+                
+                if (order.status === 'ready' && !notificationPlayed) {
+                    playNotificationWithAlert();
+                    notificationPlayed = true;
+                }
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('🔌 Disconnected');
+                updateStatus('error', '🔴 غير متصل');
+            });
+            
+            socket.on('reconnect', () => {
+                console.log('🔄 Reconnected');
+                updateStatus('success', '🟢 متصل');
+                if (orderId) {
+                    socket.emit('join-order', orderId);
+                }
+            });
+            
+            socket.on('error', (data) => {
+                console.error('❌ Socket error:', data);
+                showInAppNotification('⚠️ خطأ', data.message || 'حدث خطأ في الاتصال', 'error');
+            });
+        }
+
+        function updateUI(order) {
+            document.getElementById('loadingScreen').style.display = 'none';
+            
+            if (order.status === 'completed') {
+                document.getElementById('customerScreen').style.display = 'none';
+                document.getElementById('completedScreen').style.display = 'flex';
+                return;
+            }
+            
+            document.getElementById('customerScreen').style.display = 'flex';
+            document.getElementById('completedScreen').style.display = 'none';
+            
+            document.getElementById('orderNumber').textContent = order.number;
+            document.getElementById('customerName').textContent = order.customerName;
+            document.getElementById('orderDetails').textContent = order.orderDetails;
+            
+            const date = new Date(order.timestamp);
+            document.getElementById('orderTime').textContent = date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            
+            if (order.qrCode) {
+                document.getElementById('qrCodeImage').src = order.qrCode;
+            }
+            
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            statusBadge.className = 'status-badge';
+            let msg = '';
+            
+            switch(order.status) {
+                case 'waiting':
+                    statusBadge.classList.add('waiting');
+                    statusText.textContent = '⏳ في الانتظار';
+                    msg = 'طلبك في قائمة الانتظار، سيبدأ تحضيره قريباً';
+                    break;
+                case 'preparing':
+                    statusBadge.classList.add('preparing');
+                    statusText.textContent = '👨‍🍳 قيد التحضير';
+                    msg = 'جاري تحضير طلبك، شكراً لصبرك';
+                    break;
+                case 'ready':
+                    statusBadge.classList.add('ready');
+                    statusText.textContent = '✅ جاهز للاستلام';
+                    msg = 'طلبك جاهز! يمكنك التوجه لاستلامه';
+                    break;
+                case 'completed':
+                    statusBadge.classList.add('completed');
+                    statusText.textContent = '📦 تم التسليم';
+                    msg = 'تم تسليم طلبك، نشكرك على زيارتك';
+                    break;
+                default:
+                    statusText.textContent = 'غير معروف';
+            }
+            
+            statusMessage.textContent = msg;
+            
+            const indicator = document.getElementById('notificationIndicator');
+            if (order.status === 'ready') {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+                notificationPlayed = false;
+            }
+        }
+
+        function resetSession() {
+            window.location.href = '/';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 Page loaded');
+            console.log('📱 Order ID:', orderId);
+            
+            if (orderId) {
+                localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
+                
+                setTimeout(() => {
+                    setupPushNotifications();
+                }, 1000);
+                
+                initSocket();
+                updateStatus('success', '🟢 جاهز');
+                
+            } else {
+                const savedOrder = localStorage.getItem('currentOrder');
+                if (savedOrder) {
+                    const savedOrderId = JSON.parse(savedOrder).id;
+                    if (savedOrderId) {
+                        window.location.href = `/?order=${savedOrderId}`;
+                        return;
+                    }
+                }
+                
+                document.getElementById('loadingScreen').innerHTML = `
+                    <div class="text-center p-8">
+                        <div class="text-6xl mb-4">☕</div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">مرحباً بك!</h2>
+                        <p class="text-gray-600">لم يتم العثور على طلب</p>
+                        <p class="text-sm text-gray-500 mt-2">يرجى مسح رمز QR الخاص بطلبك</p>
+                        <div class="mt-6 flex flex-col gap-3">
+                            <a href="/dashboard.html" class="inline-block text-purple-600 hover:underline">📋 لوحة التحكم</a>
+                            <button onclick="window.location.href='/?order=ORD-1001'" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                                🔄 تجربة طلب تجريبي (ORD-1001)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (orderId) {
+                localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
+            }
+        });
+    </script>
+</body>
+</html>
