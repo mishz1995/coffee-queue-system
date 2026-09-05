@@ -7,9 +7,51 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>بطاقة طلب المقهى</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
     <link rel="stylesheet" href="/style.css">
     <script src="/socket.io/socket.io.js"></script>
     <style>
+        .btn-on-my-way {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+            width: 100%;
+        }
+        .btn-on-my-way:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+        .btn-on-my-way:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .notification-permission-btn {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+        }
+        .notification-permission-btn:hover {
+            transform: translateX(-50%) scale(1.05);
+        }
         .notification-popup {
             position: fixed;
             top: 20px;
@@ -137,6 +179,13 @@
                     <div class="title">طلبك جاهز!</div>
                     <div class="subtitle">سيتم تشغيل التنبيه والاهتزاز</div>
                 </div>
+
+                <!-- زر أنا في طريقي -->
+                <div id="onMyWayContainer" style="display: none;">
+                    <button id="onMyWayBtn" class="btn-on-my-way" onclick="onMyWay()">
+                        🚗 أنا في طريقي
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -157,12 +206,35 @@
 
     <div id="soundIcon" class="sound-icon">🔊</div>
 
+    <button id="notifPermissionBtn" class="notification-permission-btn" onclick="requestNotificationPermission()">
+        🔔 فعّل الإشعارات
+    </button>
+
     <div id="statusBar" class="status-bar">
         <span class="dot green" id="statusDot"></span>
         <span id="statusText2">🟢 جاهز</span>
     </div>
 
     <script>
+        // ============================================
+        // 🔥 Firebase Configuration
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9Jkv0WzI_SSGAJXHM4w30PhPNhZbggXI",
+            authDomain: "coffee-queue-system.firebaseapp.com",
+            projectId: "coffee-queue-system",
+            storageBucket: "coffee-queue-system.firebasestorage.app",
+            messagingSenderId: "1014346204068",
+            appId: "1:1014346204068:web:da385bc27605556fd1f731",
+            measurementId: "G-694MM57SVM"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+
+        // ============================================
+        // المتغيرات العامة
+        // ============================================
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('order');
         let socket = null;
@@ -171,6 +243,9 @@
         let notificationCount = 0;
         let notifications = [];
 
+        // ============================================
+        // الإشعارات المنبثقة
+        // ============================================
         function showPopupNotification(title, message, type = 'success', icon = '✅') {
             notificationCount++;
             document.getElementById('badgeCount').textContent = notificationCount;
@@ -253,6 +328,9 @@
             existing.forEach(el => el.remove());
         }
 
+        // ============================================
+        // الصوت والاهتزاز
+        // ============================================
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -304,6 +382,90 @@
             setTimeout(() => { document.body.style.background = ''; }, 500);
         }
 
+        // ============================================
+        // طلب إذن الإشعارات
+        // ============================================
+        async function requestNotificationPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.log('⚠️ Notification permission denied');
+                    document.getElementById('notifPermissionBtn').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('notifPermissionBtn').style.display = 'none';
+
+                const token = await messaging.getToken({
+                    vapidKey: 'BEl62iUYgUvxI4kRjBvZxMlMxNpOqQsTuVwXyZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                });
+
+                console.log('✅ FCM Token:', token);
+
+                const response = await fetch('/api/register-fcm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, orderId })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    console.log('✅ FCM Token registered');
+                    showPopupNotification('✅ تم التفعيل!', 'ستصلك الإشعارات عند تحديث طلبك', 'success', '🔔');
+                }
+
+                messaging.onMessage(function(payload) {
+                    console.log('📱 Foreground message:', payload);
+                    const title = payload.notification?.title || '☕ مقهى السعادة';
+                    const body = payload.notification?.body || 'تحديث جديد';
+                    showPopupNotification(title, body, 'success', '🔔');
+                    playNotificationSound();
+                    triggerVibration();
+                });
+
+            } catch (error) {
+                console.error('❌ Error registering FCM:', error);
+                document.getElementById('notifPermissionBtn').style.display = 'block';
+            }
+        }
+
+        // ============================================
+        // زر "أنا في طريقي"
+        // ============================================
+        async function onMyWay() {
+            const btn = document.getElementById('onMyWayBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ جاري الإرسال...';
+
+            try {
+                const response = await fetch('/api/on-my-way', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    btn.textContent = '✅ تم الإبلاغ!';
+                    showPopupNotification('🚗 تم الإبلاغ!', 'البارستا يعلم أنك في الطريق', 'success', '✅');
+                    setTimeout(() => {
+                        btn.textContent = '🚗 أنا في طريقي';
+                        btn.disabled = false;
+                    }, 5000);
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                btn.textContent = '❌ حدث خطأ';
+                setTimeout(() => {
+                    btn.textContent = '🚗 أنا في طريقي';
+                    btn.disabled = false;
+                }, 3000);
+            }
+        }
+
+        // ============================================
+        // تحديث الحالة
+        // ============================================
         function updateStatus(status, message) {
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText2');
@@ -320,6 +482,9 @@
             }
         }
 
+        // ============================================
+        // Socket.io
+        // ============================================
         function initSocket() {
             socket = io({
                 reconnection: true,
@@ -392,6 +557,9 @@
             });
         }
 
+        // ============================================
+        // تحديث الواجهة
+        // ============================================
         function updateUI(order) {
             document.getElementById('loadingScreen').style.display = 'none';
             if (order.status === 'completed') {
@@ -442,8 +610,10 @@
             const indicator = document.getElementById('notificationIndicator');
             if (order.status === 'ready') {
                 indicator.classList.add('show');
+                document.getElementById('onMyWayContainer').style.display = 'block';
             } else {
                 indicator.classList.remove('show');
+                document.getElementById('onMyWayContainer').style.display = 'none';
                 notificationPlayed = false;
             }
         }
@@ -452,13 +622,23 @@
             window.location.href = '/';
         }
 
+        // ============================================
+        // تشغيل عند تحميل الصفحة
+        // ============================================
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 Page loaded');
             if (orderId) {
                 localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
                 initSocket();
                 updateStatus('success', '🟢 جاهز');
+
+                // طلب إذن الإشعارات بعد 3 ثواني
                 setTimeout(() => {
-                    showPopupNotification('☕ مرحباً بك!', 'سيتم تحديث حالتك تلقائياً عند تغييرها', 'info', '👋');
+                    requestNotificationPermission();
+                }, 3000);
+
+                setTimeout(() => {
+                    showPopupNotification('☕ مرحباً بك!', 'ستصلك الإشعارات عند تحديث طلبك', 'info', '👋');
                 }, 2000);
             } else {
                 const savedOrder = localStorage.getItem('currentOrder');
