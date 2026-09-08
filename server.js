@@ -1,4 +1,5 @@
 const express = require('express');
+const FileStore = require('session-file-store')(session);
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
