@@ -83,7 +83,7 @@
             <div class="form-actions" style="margin-top:16px;">
                 <button onclick="closeQRModal()" class="btn-cancel">إغلاق</button>
                 <button onclick="printQR()" class="btn-submit">🖨️ طباعة</button>
-                <button onclick="openDisplayScreen()" class="btn btn-primary" style="background:#667eea;color:white;padding:10px 20px;border-radius:8px;border:none;font-weight:600;cursor:pointer;">
+                <button onclick="openQRScreen()" class="btn btn-primary" style="background:#667eea;color:white;padding:10px 20px;border-radius:8px;border:none;font-weight:600;cursor:pointer;">
                     🖥️ عرض الشاشة
                 </button>
             </div>
@@ -221,19 +221,16 @@
                 if (data.success) {
                     closeNewOrderModal();
                     
-                    // حفظ معرف الطلب الحالي
                     currentOrderId = data.order.id;
                     
                     // عرض الـ QR في المودال
                     showQR(data.order.id);
                     
-                    // فتح شاشة العرض في نافذة جديدة تلقائياً
-                    openDisplayScreen(data.order.id);
+                    // فتح شاشة QR الموحدة في نافذة جديدة
+                    openQRScreen(data.order.id);
                     
-                    // تحديث قائمة الطلبات
                     if (socket) socket.emit('get-active-orders');
                     
-                    // تفريغ الحقول
                     document.getElementById('customerNameInput').value = '';
                     document.getElementById('orderDetailsInput').value = '';
                 } else {
@@ -264,20 +261,19 @@
                 });
         }
 
-        function openDisplayScreen(orderId) {
-            // إذا لم يتم تمرير orderId، نستخدم currentOrderId
+        // ====== دالة فتح شاشة QR الموحدة ======
+        function openQRScreen(orderId) {
             const id = orderId || currentOrderId;
             if (!id) {
                 alert('لا يوجد طلب محدد لعرضه');
                 return;
             }
             
-            // فتح شاشة العرض في نافذة جديدة
-            const displayUrl = `/display.html?order=${id}`;
-            const displayWindow = window.open(displayUrl, '_blank', 'width=800,height=900');
+            // فتح شاشة qr.html بدلاً من display.html
+            const qrUrl = `/qr.html?order=${id}`;
+            const qrWindow = window.open(qrUrl, '_blank', 'width=800,height=900');
             
-            // إذا تم حظر النافذة المنبثقة، نعطي خيار بديل
-            if (!displayWindow || displayWindow.closed || typeof displayWindow.closed === 'undefined') {
+            if (!qrWindow || qrWindow.closed || typeof qrWindow.closed === 'undefined') {
                 alert('⚠️ تم حظر النافذة المنبثقة. يرجى السماح بالنوافذ المنبثقة لهذا الموقع، أو اضغط على زر "عرض الشاشة" في نافذة QR.');
             }
         }
