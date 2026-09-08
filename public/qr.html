@@ -38,40 +38,12 @@
         .banner-screen.hidden {
             display: none;
         }
-        .banner-title {
-            font-size: 48px;
-            font-weight: 900;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .banner-subtitle {
-            font-size: 20px;
-            color: #64748b;
-            margin-top: 8px;
-        }
-        .banner-info {
-            background: #f8fafc;
+        .banner-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
             border-radius: 16px;
-            padding: 24px;
-            margin: 24px 0;
-            text-align: right;
-        }
-        .banner-info-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .banner-info-item:last-child { border-bottom: none; }
-        .banner-offer {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: 700;
-            color: #92400e;
-            margin-top: 16px;
+            margin-bottom: 16px;
         }
         .banner-status {
             display: inline-block;
@@ -150,7 +122,6 @@
         /* ===== التوافق مع الجوال ===== */
         @media (max-width: 640px) {
             .screen-container { padding: 24px 16px; min-height: 400px; }
-            .banner-title { font-size: 32px; }
             .qr-large img { width: 200px; height: 200px; }
             .order-number-display { font-size: 32px; }
         }
@@ -164,36 +135,10 @@
 
         <!-- ====== شاشة البانر (الترحيبية) ====== -->
         <div class="banner-screen" id="bannerScreen">
-            <div class="banner-title">☕ مقهى السعادة</div>
-            <div class="banner-subtitle">أهلاً بك في مكانك المفضل</div>
-            
-            <div class="banner-info">
-                <div class="banner-info-item">
-                    <span>🕐</span>
-                    <span>ساعات العمل: 6 صباحاً – 12 منتصف الليل</span>
-                </div>
-                <div class="banner-info-item">
-                    <span>📍</span>
-                    <span>الموقع: شارع الملك فهد، الرياض</span>
-                </div>
-                <div class="banner-info-item">
-                    <span>📞</span>
-                    <span>للتواصل: 050 123 4567</span>
-                </div>
-                <div class="banner-info-item">
-                    <span>📱</span>
-                    <span>تابعنا على: @coffee_sa</span>
-                </div>
-            </div>
-
-            <div class="banner-offer">
-                🎁 عرض اليوم: خصم 10% على جميع المشروبات الساخنة
-            </div>
-
+            <img id="bannerImage" class="banner-image" src="" alt="بانر المقهى">
             <div class="banner-status" id="bannerStatus">
                 ⏳ في انتظار الطلب الجديد
             </div>
-            
             <p class="text-sm text-gray-400 mt-4" id="bannerTime"></p>
         </div>
 
@@ -222,6 +167,7 @@
         const qrScreen = document.getElementById('qrScreen');
         const bannerStatus = document.getElementById('bannerStatus');
         const bannerTime = document.getElementById('bannerTime');
+        const bannerImage = document.getElementById('bannerImage');
 
         // ====== تحديث وقت البانر ======
         function updateBannerTime() {
@@ -230,6 +176,21 @@
         }
         setInterval(updateBannerTime, 10000);
         updateBannerTime();
+
+        // ====== جلب البانر الحالي ======
+        function loadCurrentBanner() {
+            fetch('/api/current-banner')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.imageUrl) {
+                        bannerImage.src = data.imageUrl;
+                        bannerImage.style.display = 'block';
+                    } else {
+                        bannerImage.style.display = 'none';
+                    }
+                })
+                .catch(() => console.log('⚠️ Could not load banner'));
+        }
 
         // ====== دالة عرض البانر ======
         function showBanner(message = '⏳ في انتظار الطلب الجديد') {
@@ -281,20 +242,16 @@
 
             console.log('🔄 Updating display for order:', order.id, 'Status:', order.status);
 
-            // إذا كان الطلب مكتملاً → نعود للبانر
             if (order.status === 'completed') {
                 showBanner('✅ تم تسليم الطلب بنجاح! نشكرك على زيارتك ☕');
                 return;
             }
 
-            // ====== التعديل النهائي ======
-            // إذا تغيرت الحالة من "waiting" (أي تم مسح الباركود) → نعود للبانر مباشرة
             if (order.status !== 'waiting') {
                 showBanner('🎉 مرحباً بك! استمتع بمشروبك ☕');
                 return;
             }
 
-            // إذا كان الطلب في حالة انتظار → نعرض QR
             if (order.status === 'waiting') {
                 showQR(order);
             }
@@ -308,7 +265,6 @@
                 console.log('✅ QR Screen connected');
                 showBanner('⏳ في انتظار الطلب الجديد');
                 
-                // طلب أحدث طلب نشط عند الاتصال
                 fetch('/api/orders/active')
                     .then(res => res.json())
                     .then(data => {
@@ -323,14 +279,12 @@
                     .catch(() => console.log('⚠️ Could not fetch active orders'));
             });
 
-            // ====== استماع للطلبات الجديدة ======
             socket.on('new-order-created', (order) => {
                 console.log('🆕 New order received:', order.id);
                 currentOrder = order;
                 updateDisplay(order);
             });
 
-            // ====== استماع لتحديثات حالة الطلب ======
             socket.on('order-status-update', (order) => {
                 console.log('📦 Order status update:', order.id, order.status);
                 if (currentOrder && currentOrder.id === order.id) {
@@ -339,6 +293,15 @@
                 } else if (!currentOrder) {
                     currentOrder = order;
                     updateDisplay(order);
+                }
+            });
+
+            // ====== استماع لتحديثات البانر ======
+            socket.on('banner-updated', (data) => {
+                console.log('🖼️ Banner updated:', data.imageUrl);
+                if (data.imageUrl) {
+                    bannerImage.src = data.imageUrl;
+                    bannerImage.style.display = 'block';
                 }
             });
 
@@ -355,6 +318,7 @@
         // ====== بدء التشغيل ======
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📱 QR Screen loaded');
+            loadCurrentBanner();
             initSocket();
         });
 
