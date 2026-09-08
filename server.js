@@ -23,13 +23,22 @@ const io = new Server(server, {
 });
 
 // ====== إعداد الجلسات ======
+// ====== إعداد تخزين الجلسات في ملف ======
 app.use(session({
     secret: process.env.SESSION_SECRET || '7f8a9b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
     resave: false,
     saveUninitialized: false,
-    cookie: { 
+    store: new FileStore({
+        path: './sessions', // مجلد تخزين الجلسات
+        ttl: 30 * 24 * 60 * 60, // 30 يوم
+        reapInterval: 60 * 60 // مسح الملفات المنتهية كل ساعة
+    }),
+    rolling: true,
+    cookie: {
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 يوماً
+        httpOnly: true,
+        sameSite: 'lax'
     }
 }));
 
