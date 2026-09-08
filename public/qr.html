@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة المقهى التفاعلية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            direction: rtl;
+        }
+        .screen-container {
+            background: white;
+            border-radius: 32px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            min-height: 600px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        /* ===== بانر الترحيب ===== */
+        .banner-screen {
+            display: block;
+        }
+        .banner-screen.hidden {
+            display: none;
+        }
+        .banner-title {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .banner-subtitle {
+            font-size: 20px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        .banner-info {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: right;
+        }
+        .banner-info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .banner-info-item:last-child { border-bottom: none; }
+        .banner-offer {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            color: #92400e;
+            margin-top: 16px;
+        }
+        .banner-status {
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 50px;
+            background: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        /* ===== شاشة QR ===== */
+        .qr-screen {
+            display: none;
+        }
+        .qr-screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        .qr-large img {
+            width: 280px;
+            height: 280px;
+            margin: 16px auto;
+            border-radius: 16px;
+            background: white;
+            padding: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        .order-number-display {
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 18px;
+            margin-top: 12px;
+        }
+        .status-badge.waiting { background: #fef3c7; color: #92400e; }
+        .status-badge.preparing { background: #fef3c7; color: #92400e; }
+        .status-badge.ready { background: #d1fae5; color: #065f46; animation: pulse 1.5s infinite; }
+        .status-badge.completed { background: #f1f5f9; color: #64748b; }
+        /* ===== شاشة الترحيب ===== */
+        .welcome-screen {
+            display: none;
+        }
+        .welcome-screen.active {
+            display: block;
+            animation: fadeIn 0.8s ease;
+        }
+        .welcome-screen .big-emoji { font-size: 72px; }
+        .welcome-screen h1 { font-size: 36px; font-weight: 800; color: #1e293b; }
+        .welcome-screen .customer-name { font-size: 24px; color: #64748b; margin-top: 4px; }
+        /* ===== أنيميشن ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        /* ===== زر العودة ===== */
+        .btn-reset {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+        .btn-reset:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        /* ===== شاشة "لا يوجد طلب" ===== */
+        .no-order-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 50px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        /* ===== التوافق مع الجوال ===== */
+        @media (max-width: 640px) {
+            .screen-container { padding: 24px 16px; min-height: 400px; }
+            .banner-title { font-size: 32px; }
+            .qr-large img { width: 200px; height: 200px; }
+            .order-number-display { font-size: 32px; }
+            .welcome-screen h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn-reset" onclick="resetToBanner()">🔄 العودة للبانر</button>
+
+    <div class="screen-container" id="mainContainer">
+
+        <!-- ====== شاشة البانر (الترحيبية) ====== -->
+        <div class="banner-screen" id="bannerScreen">
+            <div class="banner-title">☕ مقهى السعادة</div>
+            <div class="banner-subtitle">أهلاً بك في مكانك المفضل</div>
+            
+            <div class="banner-info">
+                <div class="banner-info-item">
+                    <span>🕐</span>
+                    <span>ساعات العمل: 6 صباحاً – 12 منتصف الليل</span>
+                </div>
+                <div class="banner-info-item">
+                    <span>📍</span>
+                    <span>الموقع: شارع الملك فهد، الرياض</span>
+                </div>
+                <div class="banner-info-item">
+                    <span>📞</span>
+                    <span>للتواصل: 050 123 4567</span>
+                </div>
+                <div class="banner-info-item">
+                    <span>📱</span>
+                    <span>تابعنا على: @coffee_sa</span>
+                </div>
+            </div>
+
+            <div class="banner-offer">
+                🎁 عرض اليوم: خصم 10% على جميع المشروبات الساخنة
+            </div>
+
+            <div class="banner-status" id="bannerStatus">
+                ⏳ في انتظار الطلب الجديد
+            </div>
+            
+            <p class="text-sm text-gray-400 mt-4" id="bannerTime"></p>
+        </div>
+
+        <!-- ====== شاشة QR ====== -->
+        <div class="qr-screen" id="qrScreen">
+            <h2 class="text-2xl font-bold text-gray-800">☕ رمز الطلب</h2>
+            <p class="text-gray-500 text-sm">اطبع أو اعرض هذا الرمز للعميل</p>
+            <div class="qr-large">
+                <img id="qrDisplayImage" src="" alt="QR Code">
+            </div>
+            <div class="order-number-display" id="qrOrderNumber">#0000</div>
+            <div class="text-gray-500 mt-1" id="qrCustomerName">-</div>
+            <div class="status-badge waiting" id="qrStatusBadge">⏳ في الانتظار</div>
+            <p class="text-xs text-gray-400 mt-4">🔄 سيتم التحديث تلقائياً عند مسح الرمز</p>
+        </div>
+
+        <!-- ====== شاشة الترحيب بالعميل ====== -->
+        <div class="welcome-screen" id="welcomeScreen">
+            <div class="big-emoji">🎉</div>
+            <h1>أهلاً بك!</h1>
+            <div class="customer-name" id="welcomeCustomerName">-</div>
+            <div class="text-2xl font-bold text-purple-600 mt-2" id="welcomeOrderNumber">#0000</div>
+            <div class="status-badge ready" id="welcomeStatusBadge">✅ مرحباً</div>
+            
+            <div class="banner-info" style="margin-top:20px;text-align:right;">
+                <div class="banner-info-item"><span>☕</span><span>استمتع بمشروبك المفضل</span></div>
+                <div class="banner-info-item"><span>📶</span><span>WiFi مجاني: Coffee_Free</span></div>
+                <div class="banner-info-item"><span>🎵</span><span>أجواء هادئة مع موسيقى الجاز</span></div>
+            </div>
+            
+            <button onclick="resetToBanner()" class="mt-4 bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition border-none cursor-pointer">
+                🔄 العودة للبانر
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // ====== المتغيرات ======
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order');
+        let socket = null;
+        let orderData = null;
+        let isWelcomeShown = false;
+
+        // ====== عناصر الصفحة ======
+        const bannerScreen = document.getElementById('bannerScreen');
+        const qrScreen = document.getElementById('qrScreen');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const bannerStatus = document.getElementById('bannerStatus');
+        const bannerTime = document.getElementById('bannerTime');
+
+        // ====== تحديث وقت البانر ======
+        function updateBannerTime() {
+            const now = new Date();
+            bannerTime.textContent = `🕐 آخر تحديث: ${now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        }
+        setInterval(updateBannerTime, 10000);
+        updateBannerTime();
+
+        // ====== دالة عرض البانر ======
+        function showBanner(message = '⏳ في انتظار الطلب الجديد') {
+            bannerScreen.classList.remove('hidden');
+            qrScreen.classList.remove('active');
+            welcomeScreen.classList.remove('active');
+            bannerStatus.textContent = message;
+        }
+
+        // ====== دالة عرض QR ======
+        function showQR(order) {
+            bannerScreen.classList.add('hidden');
+            qrScreen.classList.add('active');
+            welcomeScreen.classList.remove('active');
+            
+            if (order) {
+                document.getElementById('qrDisplayImage').src = order.qrCode || '';
+                document.getElementById('qrOrderNumber').textContent = `#${order.number}`;
+                document.getElementById('qrCustomerName').textContent = order.customerName || '-';
+                
+                const badge = document.getElementById('qrStatusBadge');
+                badge.className = 'status-badge';
+                const statusMap = {
+                    'waiting': { class: 'waiting', text: '⏳ في الانتظار' },
+                    'preparing': { class: 'preparing', text: '👨‍🍳 قيد التحضير' },
+                    'ready': { class: 'ready', text: '✅ جاهز للاستلام' },
+                    'completed': { class: 'completed', text: '📦 تم التسليم' }
+                };
+                const s = statusMap[order.status] || statusMap['waiting'];
+                badge.classList.add(s.class);
+                badge.textContent = s.text;
+            }
+        }
+
+        // ====== دالة عرض الترحيب ======
+        function showWelcome(order) {
+            bannerScreen.classList.add('hidden');
+            qrScreen.classList.remove('active');
+            welcomeScreen.classList.add('active');
+            
+            document.getElementById('welcomeCustomerName').textContent = `👋 مرحباً ${order.customerName || 'عميل'}`;
+            document.getElementById('welcomeOrderNumber').textContent = `#${order.number}`;
+            document.getElementById('welcomeStatusBadge').textContent = '✅ مرحباً بك!';
+        }
+
+        // ====== العودة للبانر ======
+        function resetToBanner() {
+            if (socket && orderId) {
+                socket.emit('leave-order', orderId);
+            }
+            showBanner('🔄 تم العودة للشاشة الرئيسية');
+            if (window.history && window.history.pushState) {
+                const newUrl = window.location.pathname;
+                window.history.pushState({}, '', newUrl);
+            }
+            isWelcomeShown = false;
+            if (socket) {
+                socket.disconnect();
+                setTimeout(initSocket, 500);
+            }
+        }
+
+        // ====== الاتصال بـ Socket.io ======
+        function initSocket() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                console.log('✅ Screen connected');
+                if (orderId) {
+                    socket.emit('join-order', orderId);
+                    fetch(`/api/order/${orderId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success && data.order) {
+                                orderData = data.order;
+                                updateDisplay(data.order);
+                            } else {
+                                showBanner('⚠️ الطلب غير موجود');
+                            }
+                        })
+                        .catch(() => showBanner('⚠️ خطأ في الاتصال'));
+                } else {
+                    showBanner('⏳ في انتظار الطلب الجديد');
+                }
+            });
+
+            socket.on('order-status', (order) => {
+                console.log('📦 Screen update:', order);
+                orderData = order;
+                updateDisplay(order);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('🔌 Screen disconnected');
+                if (!orderId) {
+                    showBanner('🔴 غير متصل - في انتظار إعادة الاتصال');
+                }
+            });
+
+            socket.on('connect_error', () => {
+                showBanner('⚠️ مشكلة في الاتصال بالخادم');
+            });
+        }
+
+        // ====== تحديث الشاشة بناءً على حالة الطلب ======
+        function updateDisplay(order) {
+            if (!order) {
+                showBanner('⚠️ لا توجد بيانات للطلب');
+                return;
+            }
+
+            if (order.status === 'completed') {
+                showBanner('✅ تم تسليم الطلب بنجاح! نشكرك على زيارتك ☕');
+                return;
+            }
+
+            if (order.status !== 'waiting' && !isWelcomeShown) {
+                isWelcomeShown = true;
+                showWelcome(order);
+                return;
+            }
+
+            if (order.status === 'waiting') {
+                showQR(order);
+            } else {
+                showWelcome(order);
+            }
+        }
+
+        // ====== بدء التشغيل ======
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 Screen loaded, orderId:', orderId);
+            initSocket();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (socket) socket.disconnect();
+        });
+    </script>
+</body>
+</html>
