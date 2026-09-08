@@ -118,17 +118,6 @@
         .status-badge.preparing { background: #fef3c7; color: #92400e; }
         .status-badge.ready { background: #d1fae5; color: #065f46; animation: pulse 1.5s infinite; }
         .status-badge.completed { background: #f1f5f9; color: #64748b; }
-        /* ===== شاشة الترحيب ===== */
-        .welcome-screen {
-            display: none;
-        }
-        .welcome-screen.active {
-            display: block;
-            animation: fadeIn 0.8s ease;
-        }
-        .welcome-screen .big-emoji { font-size: 72px; }
-        .welcome-screen h1 { font-size: 36px; font-weight: 800; color: #1e293b; }
-        .welcome-screen .customer-name { font-size: 24px; color: #64748b; margin-top: 4px; }
         /* ===== أنيميشن ===== */
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
@@ -164,7 +153,6 @@
             .banner-title { font-size: 32px; }
             .qr-large img { width: 200px; height: 200px; }
             .order-number-display { font-size: 32px; }
-            .welcome-screen h1 { font-size: 28px; }
         }
     </style>
 </head>
@@ -222,37 +210,16 @@
             <p class="text-xs text-gray-400 mt-4">🔄 سيتم التحديث تلقائياً عند مسح الرمز</p>
         </div>
 
-        <!-- ====== شاشة الترحيب بالعميل ====== -->
-        <div class="welcome-screen" id="welcomeScreen">
-            <div class="big-emoji">🎉</div>
-            <h1>أهلاً بك!</h1>
-            <div class="customer-name" id="welcomeCustomerName">-</div>
-            <div class="text-2xl font-bold text-purple-600 mt-2" id="welcomeOrderNumber">#0000</div>
-            <div class="status-badge ready" id="welcomeStatusBadge">✅ مرحباً</div>
-            
-            <div class="banner-info" style="margin-top:20px;text-align:right;">
-                <div class="banner-info-item"><span>☕</span><span>استمتع بمشروبك المفضل</span></div>
-                <div class="banner-info-item"><span>📶</span><span>WiFi مجاني: Coffee_Free</span></div>
-                <div class="banner-info-item"><span>🎵</span><span>أجواء هادئة مع موسيقى الجاز</span></div>
-            </div>
-            
-            <button onclick="resetToBanner()" class="mt-4 bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition border-none cursor-pointer">
-                🔄 العودة للبانر
-            </button>
-        </div>
-
     </div>
 
     <script>
         // ====== المتغيرات ======
         let socket = null;
         let currentOrder = null;
-        let isWelcomeShown = false;
 
         // ====== عناصر الصفحة ======
         const bannerScreen = document.getElementById('bannerScreen');
         const qrScreen = document.getElementById('qrScreen');
-        const welcomeScreen = document.getElementById('welcomeScreen');
         const bannerStatus = document.getElementById('bannerStatus');
         const bannerTime = document.getElementById('bannerTime');
 
@@ -268,17 +235,13 @@
         function showBanner(message = '⏳ في انتظار الطلب الجديد') {
             bannerScreen.classList.remove('hidden');
             qrScreen.classList.remove('active');
-            welcomeScreen.classList.remove('active');
             bannerStatus.textContent = message;
-            // إعادة تعيين علم الترحيب
-            isWelcomeShown = false;
         }
 
         // ====== دالة عرض QR ======
         function showQR(order) {
             bannerScreen.classList.add('hidden');
             qrScreen.classList.add('active');
-            welcomeScreen.classList.remove('active');
             
             if (order) {
                 document.getElementById('qrDisplayImage').src = order.qrCode || '';
@@ -299,17 +262,6 @@
             }
         }
 
-        // ====== دالة عرض الترحيب ======
-        function showWelcome(order) {
-            bannerScreen.classList.add('hidden');
-            qrScreen.classList.remove('active');
-            welcomeScreen.classList.add('active');
-            
-            document.getElementById('welcomeCustomerName').textContent = `👋 مرحباً ${order.customerName || 'عميل'}`;
-            document.getElementById('welcomeOrderNumber').textContent = `#${order.number}`;
-            document.getElementById('welcomeStatusBadge').textContent = '✅ مرحباً بك!';
-        }
-
         // ====== العودة للبانر ======
         function resetToBanner() {
             showBanner('🔄 تم العودة للشاشة الرئيسية');
@@ -317,9 +269,7 @@
                 const newUrl = window.location.pathname;
                 window.history.pushState({}, '', newUrl);
             }
-            // إعادة تعيين المتغيرات
             currentOrder = null;
-            isWelcomeShown = false;
         }
 
         // ====== تحديث الشاشة بناءً على حالة الطلب ======
@@ -331,22 +281,22 @@
 
             console.log('🔄 Updating display for order:', order.id, 'Status:', order.status);
 
+            // إذا كان الطلب مكتملاً → نعود للبانر
             if (order.status === 'completed') {
                 showBanner('✅ تم تسليم الطلب بنجاح! نشكرك على زيارتك ☕');
                 return;
             }
 
-            // إذا كان العميل قد مسح الرمز (الحالة تغيرت من waiting)
-            if (order.status !== 'waiting' && !isWelcomeShown) {
-                isWelcomeShown = true;
-                showWelcome(order);
+            // ====== التعديل النهائي ======
+            // إذا تغيرت الحالة من "waiting" (أي تم مسح الباركود) → نعود للبانر مباشرة
+            if (order.status !== 'waiting') {
+                showBanner('🎉 مرحباً بك! استمتع بمشروبك ☕');
                 return;
             }
 
+            // إذا كان الطلب في حالة انتظار → نعرض QR
             if (order.status === 'waiting') {
                 showQR(order);
-            } else {
-                showWelcome(order);
             }
         }
 
@@ -363,11 +313,9 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.success && data.orders && data.orders.length > 0) {
-                            // عرض أحدث طلب (آخر عنصر في المصفوفة)
                             const latestOrder = data.orders[data.orders.length - 1];
                             if (latestOrder.status !== 'completed') {
                                 currentOrder = latestOrder;
-                                isWelcomeShown = false;
                                 updateDisplay(latestOrder);
                             }
                         }
@@ -379,7 +327,6 @@
             socket.on('new-order-created', (order) => {
                 console.log('🆕 New order received:', order.id);
                 currentOrder = order;
-                isWelcomeShown = false;
                 updateDisplay(order);
             });
 
@@ -390,7 +337,6 @@
                     currentOrder = order;
                     updateDisplay(order);
                 } else if (!currentOrder) {
-                    // إذا لم يكن هناك طلب معروض، نعرض هذا التحديث
                     currentOrder = order;
                     updateDisplay(order);
                 }
