@@ -8,10 +8,9 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0f172a;
-    color: #f1f5f9;
+    background: #f8fafc;
+    color: #1e293b;
     direction: rtl;
-    min-height: 100vh;
 }
 
 .container {
@@ -28,7 +27,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     padding: 20px;
-    background: #0f172a;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
 }
 
 .boarding-pass {
@@ -47,7 +46,7 @@ body {
 }
 
 .boarding-pass-inner {
-    background: #1e293b;
+    background: #ffffff;
     border-radius: 21px;
     padding: 28px 24px;
 }
@@ -62,7 +61,7 @@ body {
 .shop-name {
     font-size: 20px;
     font-weight: 800;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .shop-name .emoji {
@@ -143,11 +142,11 @@ body {
 .status-message {
     margin-top: 8px;
     font-size: 14px;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .order-details {
-    background: #0f172a;
+    background: #f8fafc;
     border-radius: 12px;
     padding: 16px;
     margin: 12px 0;
@@ -160,7 +159,7 @@ body {
 }
 
 .detail-row:not(:last-child) {
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .detail-label {
@@ -174,7 +173,7 @@ body {
 .detail-value {
     font-size: 15px;
     font-weight: 600;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .time-section {
@@ -185,16 +184,16 @@ body {
     color: #94a3b8;
     margin: 8px 0 16px 0;
     padding: 8px 0;
-    border-top: 1px solid #334155;
+    border-top: 1px solid #f1f5f9;
 }
 
 .time-value {
     font-weight: 600;
-    color: #94a3b8;
+    color: #475569;
 }
 
 .barcode-divider {
-    border-top: 2px dashed #334155;
+    border-top: 2px dashed #e2e8f0;
     margin: 16px 0;
     position: relative;
 }
@@ -205,9 +204,9 @@ body {
     top: -12px;
     left: 50%;
     transform: translateX(-50%);
-    background: #1e293b;
+    background: white;
     padding: 0 12px;
-    color: #64748b;
+    color: #94a3b8;
     font-size: 14px;
 }
 
@@ -219,10 +218,10 @@ body {
 }
 
 .qr-container {
-    background: #1e293b;
+    background: white;
     border-radius: 12px;
     padding: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .qr-container img {
@@ -241,8 +240,8 @@ body {
     display: none;
     margin-top: 16px;
     padding: 12px;
-    background: #065f46;
-    border: 1px solid #10b981;
+    background: #ecfdf5;
+    border: 1px solid #6ee7b7;
     border-radius: 12px;
     text-align: center;
 }
@@ -258,17 +257,17 @@ body {
 
 .notification-indicator .title {
     font-weight: 600;
-    color: #6ee7b7;
+    color: #065f46;
 }
 
 .notification-indicator .subtitle {
     font-size: 12px;
-    color: #94a3b8;
+    color: #6b7280;
 }
 
 /* ====== شاشة "تم التسليم" ====== */
 .completed-screen {
-    background: #0f172a;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -300,8 +299,8 @@ body {
 
 .completed-content .btn-reset {
     margin-top: 24px;
-    background: #667eea;
-    color: white;
+    background: white;
+    color: #667eea;
     padding: 12px 32px;
     border-radius: 12px;
     border: none;
@@ -313,7 +312,7 @@ body {
 
 .completed-content .btn-reset:hover {
     transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 /* ====== شاشة التحميل ====== */
@@ -322,13 +321,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #0f172a;
+    background: #f8fafc;
 }
 
 .loader {
     width: 48px;
     height: 48px;
-    border: 4px solid #334155;
+    border: 4px solid #e2e8f0;
     border-top-color: #667eea;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -476,10 +475,10 @@ body {
 
 /* ====== لوحة التحكم (Dashboard) ====== */
 .dashboard-header {
-    background: #1e293b;
+    background: white;
     padding: 20px 24px;
     border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
@@ -491,7 +490,7 @@ body {
 .dashboard-header h1 {
     font-size: 24px;
     font-weight: 800;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .dashboard-header .subtitle {
@@ -507,17 +506,17 @@ body {
 }
 
 .stat-card {
-    background: #1e293b;
+    background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     text-align: center;
 }
 
 .stat-card .number {
     font-size: 32px;
     font-weight: 800;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .stat-card .label {
@@ -541,50 +540,50 @@ body {
 
 /* ====== بطاقات الطلبات ====== */
 .order-card {
-    background: #1e293b;
+    background: white;
     border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
     transition: all 0.3s ease;
-    border-right: 4px solid #334155;
+    border-right: 4px solid #e2e8f0;
 }
 
 .order-card:hover {
     transform: translateX(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .order-card.status-waiting {
     border-right-color: #f59e0b;
-    background: #1e293b;
+    background: #fffbeb;
 }
 
 .order-card.status-preparing {
     border-right-color: #f97316;
-    background: #1e293b;
+    background: #fff7ed;
 }
 
 .order-card.status-ready {
     border-right-color: #10b981;
-    background: #1e293b;
+    background: #ecfdf5;
     animation: pulse-card 2s infinite;
 }
 
 .order-card.status-completed {
-    border-right-color: #64748b;
+    border-right-color: #94a3b8;
     opacity: 0.7;
 }
 
 @keyframes pulse-card {
-    0% { background: #1e293b; }
-    50% { background: #2d3748; }
-    100% { background: #1e293b; }
+    0% { background: #ecfdf5; }
+    50% { background: #d1fae5; }
+    100% { background: #ecfdf5; }
 }
 
 .order-card .order-info {
@@ -597,23 +596,23 @@ body {
 .order-card .order-number-big {
     font-size: 28px;
     font-weight: 800;
-    color: #f1f5f9;
+    color: #1e293b;
     min-width: 60px;
 }
 
 .order-card .order-name {
     font-weight: 600;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .order-card .order-details-text {
     font-size: 14px;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .order-card .order-time-text {
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
 }
 
 .order-card .order-actions {
@@ -635,7 +634,7 @@ body {
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .btn:active {
@@ -644,7 +643,7 @@ body {
 
 .btn-prepare {
     background: #f59e0b;
-    color: #0f172a;
+    color: white;
 }
 
 .btn-ready {
@@ -653,7 +652,7 @@ body {
 }
 
 .btn-complete {
-    background: #64748b;
+    background: #6b7280;
     color: white;
 }
 
@@ -672,19 +671,19 @@ body {
 }
 
 .btn-secondary {
-    background: #334155;
-    color: #94a3b8;
+    background: #e2e8f0;
+    color: #475569;
 }
 
 .btn-secondary:hover {
-    background: #475569;
+    background: #cbd5e1;
 }
 
 /* ====== النوافذ المنبثقة (Modals) ====== */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -694,19 +693,19 @@ body {
 }
 
 .modal-content {
-    background: #1e293b;
+    background: white;
     border-radius: 16px;
     padding: 28px;
     max-width: 480px;
     width: 100%;
     animation: slideDown 0.3s ease;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .modal-content h2 {
     font-size: 20px;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #1e293b;
     margin-bottom: 16px;
 }
 
@@ -718,18 +717,16 @@ body {
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #94a3b8;
+    color: #475569;
     margin-bottom: 4px;
 }
 
 .modal-content .form-group input {
     width: 100%;
     padding: 10px 14px;
-    border: 2px solid #334155;
+    border: 2px solid #e2e8f0;
     border-radius: 8px;
     font-size: 15px;
-    background: #0f172a;
-    color: #f1f5f9;
     transition: border-color 0.3s ease;
 }
 
@@ -765,20 +762,20 @@ body {
 }
 
 .modal-content .form-actions .btn-cancel {
-    background: #334155;
-    color: #94a3b8;
+    background: #e2e8f0;
+    color: #475569;
 }
 
 .modal-content .form-actions .btn-cancel:hover {
-    background: #475569;
+    background: #cbd5e1;
 }
 
 .qr-preview {
-    border: 2px dashed #334155;
+    border: 2px dashed #e2e8f0;
     border-radius: 12px;
     padding: 20px;
     text-align: center;
-    background: #0f172a;
+    background: #f8fafc;
 }
 
 .qr-preview img {
@@ -790,7 +787,7 @@ body {
 .qr-preview .qr-label {
     margin-top: 8px;
     font-weight: 600;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 /* ====== شاشة العرض (QR) ====== */
@@ -831,7 +828,7 @@ body {
     padding: 30px 20px;
     width: 100%;
     height: 100%;
-    background: #1e293b;
+    background: white;
     border-radius: 32px;
     flex-direction: column;
     align-items: center;
@@ -843,18 +840,6 @@ body {
     animation: fadeIn 0.5s ease;
 }
 
-.qr-screen h2 {
-    color: #f1f5f9 !important;
-}
-
-.qr-screen .text-gray-500 {
-    color: #94a3b8 !important;
-}
-
-.qr-screen .text-gray-800 {
-    color: #f1f5f9 !important;
-}
-
 .qr-large img {
     width: 220px;
     height: 220px;
@@ -862,7 +847,24 @@ body {
     border-radius: 16px;
     background: white;
     padding: 10px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.order-number-display {
+    font-size: 38px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: 8px;
 }
 
 .shop-name-display {
@@ -870,7 +872,7 @@ body {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(10px);
     color: white;
     padding: 8px 20px;
@@ -884,10 +886,10 @@ body {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 12px 24px;
     border-radius: 50px;
     font-size: 14px;
@@ -897,7 +899,7 @@ body {
 }
 
 .btn-reset:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 @keyframes fadeIn {
@@ -907,7 +909,7 @@ body {
 
 /* ====== صفحة تسجيل الدخول ====== */
 .login-container {
-    background: #1e293b;
+    background: white;
     border-radius: 32px;
     padding: 48px 40px;
     max-width: 420px;
@@ -919,7 +921,7 @@ body {
 .login-container h1 {
     font-size: 28px;
     font-weight: 800;
-    color: #f1f5f9;
+    color: #1e293b;
     margin-bottom: 4px;
 }
 
@@ -938,18 +940,16 @@ body {
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #94a3b8;
+    color: #475569;
     margin-bottom: 4px;
 }
 
 .login-container .form-group input {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #334155;
+    border: 2px solid #e2e8f0;
     border-radius: 12px;
     font-size: 16px;
-    background: #0f172a;
-    color: #f1f5f9;
     transition: border-color 0.3s ease;
 }
 
@@ -962,7 +962,7 @@ body {
     width: 100%;
     padding: 14px;
     background: #F59E0B;
-    color: #0f172a;
+    color: white;
     border: none;
     border-radius: 12px;
     font-size: 18px;
@@ -998,20 +998,6 @@ body {
     color: #94a3b8;
 }
 
-.demo-credentials {
-    background: #0f172a;
-    border-radius: 12px;
-    padding: 16px;
-    margin-top: 20px;
-    font-size: 13px;
-    color: #94a3b8;
-    text-align: right;
-}
-
-.demo-credentials strong {
-    color: #f1f5f9;
-}
-
 /* ====== لوحة المدير (admin.html) ====== */
 .admin-container {
     max-width: 1200px;
@@ -1019,11 +1005,11 @@ body {
 }
 
 .header {
-    background: #1e293b;
+    background: white;
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1034,14 +1020,14 @@ body {
 .header h1 {
     font-size: 24px;
     font-weight: 800;
-    color: #f1f5f9;
+    color: #1e293b;
 }
 
 .shop-table {
-    background: #1e293b;
+    background: white;
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     overflow-x: auto;
 }
 
@@ -1053,15 +1039,15 @@ body {
 .shop-table th {
     text-align: right;
     padding: 12px;
-    border-bottom: 2px solid #334155;
-    color: #94a3b8;
+    border-bottom: 2px solid #e2e8f0;
+    color: #475569;
     font-size: 14px;
 }
 
 .shop-table td {
     padding: 12px;
-    border-bottom: 1px solid #334155;
-    color: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+    color: #1e293b;
 }
 
 .badge {
@@ -1073,18 +1059,18 @@ body {
 }
 
 .badge.active {
-    background: #065f46;
-    color: #6ee7b7;
+    background: #d1fae5;
+    color: #065f46;
 }
 
 .badge.inactive {
-    background: #7f1d1d;
-    color: #fca5a5;
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 .badge.admin {
-    background: #1e3a5f;
-    color: #93c5fd;
+    background: #dbeafe;
+    color: #1e40af;
 }
 
 .loading-text {
@@ -1105,29 +1091,29 @@ body {
 
 /* ====== إعدادات المقهى ====== */
 .settings-section {
-    background: #1e293b !important;
+    background: #f8fafc !important;
     border-radius: 16px;
     padding: 20px;
     margin-top: 20px;
 }
 
 .settings-section h3 {
-    color: #f1f5f9 !important;
+    color: #1e293b !important;
     font-weight: 700;
     margin-bottom: 12px;
 }
 
 .settings-section label {
-    color: #94a3b8 !important;
+    color: #475569 !important;
     font-weight: 600;
 }
 
 .settings-section input {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
+    background: white !important;
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
     padding: 10px 14px;
-    border: 2px solid #334155;
+    border: 2px solid #e2e8f0;
     border-radius: 8px;
     font-size: 14px;
     flex: 1;
