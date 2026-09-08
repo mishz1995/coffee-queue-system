@@ -16,16 +16,17 @@ const io = new Server(server, {
     }
 });
 
+// ====== الميدلوير ======
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// ====== المسارات المخصصة ======
 app.get('/qr', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/qr.html'));
 });
 
-const orders = new Map();
-let orderCounter = 1000;
-
+// ====== مسارات API ======
 app.get('/service-worker.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.sendFile(path.join(__dirname, '../public/service-worker.js'));
@@ -85,6 +86,10 @@ app.get('/api/orders/active', (req, res) => {
     res.json({ success: true, orders: activeOrders });
 });
 
+// ====== Socket.io ======
+const orders = new Map();
+let orderCounter = 1000;
+
 io.on('connection', (socket) => {
     console.log('🟢 New client connected:', socket.id);
     
@@ -98,6 +103,11 @@ io.on('connection', (socket) => {
         } else {
             socket.emit('error', { message: 'Order not found' });
         }
+    });
+    
+    socket.on('leave-order', (orderId) => {
+        socket.leave(orderId);
+        console.log(`📱 Client left room: ${orderId}`);
     });
     
     socket.on('update-order-status', ({ orderId, newStatus }) => {
@@ -133,12 +143,14 @@ io.on('connection', (socket) => {
     });
 });
 
+// ====== تشغيل السيرفر ======
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📋 Dashboard: http://localhost:${PORT}/dashboard.html`);
     console.log(`👤 Customer: http://localhost:${PORT}/index.html`);
+    console.log(`🖥️  Smart QR Screen: http://localhost:${PORT}/qr`);
     console.log(`🧪 Test: http://localhost:${PORT}/simple.html`);
     
     console.log('\n📱 للوصول من الجوال:');
@@ -146,7 +158,7 @@ server.listen(PORT, '0.0.0.0', () => {
     for (const [name, ifaceList] of Object.entries(interfaces)) {
         for (const iface of ifaceList) {
             if (iface.family === 'IPv4' && !iface.internal) {
-                console.log(`   ➜ http://${iface.address}:${PORT}/index.html`);
+                console.log(`   ➜ http://${iface.address}:${PORT}/qr`);
             }
         }
     }
