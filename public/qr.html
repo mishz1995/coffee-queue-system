@@ -158,16 +158,6 @@
         .btn-reset:hover {
             background: rgba(255,255,255,0.25);
         }
-        /* ===== شاشة "لا يوجد طلب" ===== */
-        .no-order-badge {
-            display: inline-block;
-            padding: 8px 24px;
-            border-radius: 50px;
-            background: #fee2e2;
-            color: #991b1b;
-            font-weight: 600;
-            margin-top: 12px;
-        }
         /* ===== التوافق مع الجوال ===== */
         @media (max-width: 640px) {
             .screen-container { padding: 24px 16px; min-height: 400px; }
@@ -255,10 +245,8 @@
 
     <script>
         // ====== المتغيرات ======
-        const urlParams = new URLSearchParams(window.location.search);
-        const orderId = urlParams.get('order');
         let socket = null;
-        let orderData = null;
+        let currentOrder = null;
         let isWelcomeShown = false;
 
         // ====== عناصر الصفحة ======
@@ -282,6 +270,8 @@
             qrScreen.classList.remove('active');
             welcomeScreen.classList.remove('active');
             bannerStatus.textContent = message;
+            // إعادة تعيين علم الترحيب
+            isWelcomeShown = false;
         }
 
         // ====== دالة عرض QR ======
@@ -322,61 +312,14 @@
 
         // ====== العودة للبانر ======
         function resetToBanner() {
-            if (socket && orderId) {
-                socket.emit('leave-order', orderId);
-            }
             showBanner('🔄 تم العودة للشاشة الرئيسية');
             if (window.history && window.history.pushState) {
                 const newUrl = window.location.pathname;
                 window.history.pushState({}, '', newUrl);
             }
+            // إعادة تعيين المتغيرات
+            currentOrder = null;
             isWelcomeShown = false;
-            if (socket) {
-                socket.disconnect();
-                setTimeout(initSocket, 500);
-            }
-        }
-
-        // ====== الاتصال بـ Socket.io ======
-        function initSocket() {
-            socket = io();
-            
-            socket.on('connect', () => {
-                console.log('✅ Screen connected');
-                if (orderId) {
-                    socket.emit('join-order', orderId);
-                    fetch(`/api/order/${orderId}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success && data.order) {
-                                orderData = data.order;
-                                updateDisplay(data.order);
-                            } else {
-                                showBanner('⚠️ الطلب غير موجود');
-                            }
-                        })
-                        .catch(() => showBanner('⚠️ خطأ في الاتصال'));
-                } else {
-                    showBanner('⏳ في انتظار الطلب الجديد');
-                }
-            });
-
-            socket.on('order-status', (order) => {
-                console.log('📦 Screen update:', order);
-                orderData = order;
-                updateDisplay(order);
-            });
-
-            socket.on('disconnect', () => {
-                console.log('🔌 Screen disconnected');
-                if (!orderId) {
-                    showBanner('🔴 غير متصل - في انتظار إعادة الاتصال');
-                }
-            });
-
-            socket.on('connect_error', () => {
-                showBanner('⚠️ مشكلة في الاتصال بالخادم');
-            });
         }
 
         // ====== تحديث الشاشة بناءً على حالة الطلب ======
@@ -386,11 +329,14 @@
                 return;
             }
 
+            console.log('🔄 Updating display for order:', order.id, 'Status:', order.status);
+
             if (order.status === 'completed') {
                 showBanner('✅ تم تسليم الطلب بنجاح! نشكرك على زيارتك ☕');
                 return;
             }
 
+            // إذا كان العميل قد مسح الرمز (الحالة تغيرت من waiting)
             if (order.status !== 'waiting' && !isWelcomeShown) {
                 isWelcomeShown = true;
                 showWelcome(order);
@@ -404,9 +350,65 @@
             }
         }
 
+        // ====== الاتصال بـ Socket.io ======
+        function initSocket() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                console.log('✅ QR Screen connected');
+                showBanner('⏳ في انتظار الطلب الجديد');
+                
+                // طلب أحدث طلب نشط عند الاتصال
+                fetch('/api/orders/active')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.orders && data.orders.length > 0) {
+                            // عرض أحدث طلب (آخر عنصر في المصفوفة)
+                            const latestOrder = data.orders[data.orders.length - 1];
+                            if (latestOrder.status !== 'completed') {
+                                currentOrder = latestOrder;
+                                isWelcomeShown = false;
+                                updateDisplay(latestOrder);
+                            }
+                        }
+                    })
+                    .catch(() => console.log('⚠️ Could not fetch active orders'));
+            });
+
+            // ====== استماع للطلبات الجديدة ======
+            socket.on('new-order-created', (order) => {
+                console.log('🆕 New order received:', order.id);
+                currentOrder = order;
+                isWelcomeShown = false;
+                updateDisplay(order);
+            });
+
+            // ====== استماع لتحديثات حالة الطلب ======
+            socket.on('order-status-update', (order) => {
+                console.log('📦 Order status update:', order.id, order.status);
+                if (currentOrder && currentOrder.id === order.id) {
+                    currentOrder = order;
+                    updateDisplay(order);
+                } else if (!currentOrder) {
+                    // إذا لم يكن هناك طلب معروض، نعرض هذا التحديث
+                    currentOrder = order;
+                    updateDisplay(order);
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.log('🔌 QR Screen disconnected');
+                showBanner('🔴 غير متصل - في انتظار إعادة الاتصال');
+            });
+
+            socket.on('connect_error', () => {
+                showBanner('⚠️ مشكلة في الاتصال بالخادم');
+            });
+        }
+
         // ====== بدء التشغيل ======
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('📱 Screen loaded, orderId:', orderId);
+            console.log('📱 QR Screen loaded');
             initSocket();
         });
 
