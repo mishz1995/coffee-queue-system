@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم الرئيسية - نظام المقاهي</title>
+    <title>لوحة التحكم الرئيسية - النظام</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #f8fafc; font-family: system-ui, sans-serif; direction: rtl; padding: 20px; }
@@ -51,7 +51,7 @@
         <div class="header">
             <div>
                 <h1>🏢 لوحة التحكم الرئيسية</h1>
-                <p style="color: #94a3b8; font-size: 14px;">إدارة جميع المقاهي والاشتراكات</p>
+                <p style="color: #94a3b8; font-size: 14px;">إدارة جميع الاشتراكات</p>
             </div>
             <div style="display: flex; gap: 12px;">
                 <button onclick="openAddShopModal()" class="btn btn-toggle" style="padding: 10px 24px;">➕ إضافة مقهى</button>
@@ -61,18 +61,18 @@
 
         <!-- الإحصائيات -->
         <div class="stats">
-            <div class="stat-card"><div class="number" id="totalShops">0</div><div class="label">إجمالي المقاهي</div></div>
-            <div class="stat-card"><div class="number" id="activeShops" style="color:#10b981;">0</div><div class="label">المقاهي النشطة</div></div>
-            <div class="stat-card"><div class="number" id="inactiveShops" style="color:#ef4444;">0</div><div class="label">المقاهي الموقفة</div></div>
+            <div class="stat-card"><div class="number" id="totalShops">0</div><div class="label">إجمالي الاشتركات</div></div>
+            <div class="stat-card"><div class="number" id="activeShops" style="color:#10b981;">0</div><div class="label">الاشتركات النشطة</div></div>
+            <div class="stat-card"><div class="number" id="inactiveShops" style="color:#ef4444;">0</div><div class="label">الاشتركات الموقفة</div></div>
         </div>
 
         <!-- قائمة المقاهي -->
         <div class="shop-table">
-            <h2 style="font-weight: 700; margin-bottom: 16px;">📋 قائمة المقاهي</h2>
+            <h2 style="font-weight: 700; margin-bottom: 16px;">📋 قائمة المشتركين</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>اسم المقهى</th>
+                        <th>اسم العلامة</th>
                         <th>اسم المستخدم</th>
                         <th>رابط التقييم</th>
                         <th>رابط QR</th>
@@ -90,10 +90,10 @@
     <!-- مودال إضافة مقهى -->
     <div class="modal" id="addShopModal">
         <div class="modal-content">
-            <h2>➕ إضافة مقهى جديد</h2>
+            <h2>➕ إضافة مشترك جديد</h2>
             <form id="addShopForm" onsubmit="addShop(event)">
                 <div class="form-group">
-                    <label>اسم المقهى</label>
+                    <label>اسم العلامة</label>
                     <input type="text" id="shopName" placeholder="مقهى MI" required>
                 </div>
                 <div class="form-group">
@@ -194,7 +194,7 @@
 
         // ====== تشغيل/إيقاف مقهى ======
         async function toggleShop(shopId) {
-            if (!confirm('هل أنت متأكد من تغيير حالة هذا المقهى؟')) return;
+            if (!confirm('هل أنت متأكد من تغيير حالة هذا الاشتركات؟')) return;
             
             try {
                 const response = await fetch(`/api/admin/shops/${shopId}/toggle`, {
@@ -268,7 +268,7 @@
                 if (data.success) {
                     closeAddShopModal();
                     loadShops();
-                    alert('✅ تم إضافة المقهى بنجاح!');
+                    alert('✅ تم إضافة المشترك بنجاح!');
                 } else {
                     alert('❌ ' + data.error);
                 }
