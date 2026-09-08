@@ -1,5 +1,4 @@
 const express = require('express');
-const FileStore = require('session-file-store')(session);
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
@@ -8,7 +7,8 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const multer = require('multer');
-const session = require('express-session');
+const session = require('express-session'); // <-- 1. عرّف session أولاً
+const FileStore = require('session-file-store')(session); // <-- 2. استخدم session بعد تعريفه
 
 require('dotenv').config();
 
