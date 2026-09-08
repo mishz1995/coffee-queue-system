@@ -21,7 +21,7 @@
         .screen-container {
             background: white;
             border-radius: 32px;
-            padding: 40px;
+            padding: 0;
             max-width: 800px;
             width: 100%;
             min-height: 600px;
@@ -34,29 +34,26 @@
         /* ===== بانر الترحيب ===== */
         .banner-screen {
             display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
         }
         .banner-screen.hidden {
             display: none;
         }
         .banner-image {
             width: 100%;
-            max-height: 400px;
+            height: 100%;
+            min-height: 600px;
             object-fit: cover;
-            border-radius: 16px;
-            margin-bottom: 16px;
-        }
-        .banner-status {
-            display: inline-block;
-            padding: 8px 24px;
-            border-radius: 50px;
-            background: #dbeafe;
-            color: #1e40af;
-            font-weight: 600;
-            margin-top: 12px;
+            border-radius: 32px;
+            display: block;
         }
         /* ===== شاشة QR ===== */
         .qr-screen {
             display: none;
+            padding: 40px 24px;
+            min-height: 600px;
         }
         .qr-screen.active {
             display: block;
@@ -121,7 +118,9 @@
         }
         /* ===== التوافق مع الجوال ===== */
         @media (max-width: 640px) {
-            .screen-container { padding: 24px 16px; min-height: 400px; }
+            .screen-container { min-height: 400px; }
+            .banner-image { min-height: 400px; }
+            .qr-screen { min-height: 400px; padding: 24px 16px; }
             .qr-large img { width: 200px; height: 200px; }
             .order-number-display { font-size: 32px; }
         }
@@ -136,10 +135,6 @@
         <!-- ====== شاشة البانر (الترحيبية) ====== -->
         <div class="banner-screen" id="bannerScreen">
             <img id="bannerImage" class="banner-image" src="" alt="بانر المقهى">
-            <div class="banner-status" id="bannerStatus">
-                ⏳ في انتظار الطلب الجديد
-            </div>
-            <p class="text-sm text-gray-400 mt-4" id="bannerTime"></p>
         </div>
 
         <!-- ====== شاشة QR ====== -->
@@ -165,17 +160,7 @@
         // ====== عناصر الصفحة ======
         const bannerScreen = document.getElementById('bannerScreen');
         const qrScreen = document.getElementById('qrScreen');
-        const bannerStatus = document.getElementById('bannerStatus');
-        const bannerTime = document.getElementById('bannerTime');
         const bannerImage = document.getElementById('bannerImage');
-
-        // ====== تحديث وقت البانر ======
-        function updateBannerTime() {
-            const now = new Date();
-            bannerTime.textContent = `🕐 آخر تحديث: ${now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-        }
-        setInterval(updateBannerTime, 10000);
-        updateBannerTime();
 
         // ====== جلب البانر الحالي ======
         function loadCurrentBanner() {
@@ -193,10 +178,9 @@
         }
 
         // ====== دالة عرض البانر ======
-        function showBanner(message = '⏳ في انتظار الطلب الجديد') {
+        function showBanner() {
             bannerScreen.classList.remove('hidden');
             qrScreen.classList.remove('active');
-            bannerStatus.textContent = message;
         }
 
         // ====== دالة عرض QR ======
@@ -225,7 +209,7 @@
 
         // ====== العودة للبانر ======
         function resetToBanner() {
-            showBanner('🔄 تم العودة للشاشة الرئيسية');
+            showBanner();
             if (window.history && window.history.pushState) {
                 const newUrl = window.location.pathname;
                 window.history.pushState({}, '', newUrl);
@@ -236,19 +220,19 @@
         // ====== تحديث الشاشة بناءً على حالة الطلب ======
         function updateDisplay(order) {
             if (!order) {
-                showBanner('⚠️ لا توجد بيانات للطلب');
+                showBanner();
                 return;
             }
 
             console.log('🔄 Updating display for order:', order.id, 'Status:', order.status);
 
             if (order.status === 'completed') {
-                showBanner('✅ تم تسليم الطلب بنجاح! نشكرك على زيارتك ☕');
+                showBanner();
                 return;
             }
 
             if (order.status !== 'waiting') {
-                showBanner('🎉 مرحباً بك! استمتع بمشروبك ☕');
+                showBanner();
                 return;
             }
 
@@ -263,7 +247,7 @@
             
             socket.on('connect', () => {
                 console.log('✅ QR Screen connected');
-                showBanner('⏳ في انتظار الطلب الجديد');
+                showBanner();
                 
                 fetch('/api/orders/active')
                     .then(res => res.json())
@@ -296,7 +280,6 @@
                 }
             });
 
-            // ====== استماع لتحديثات البانر ======
             socket.on('banner-updated', (data) => {
                 console.log('🖼️ Banner updated:', data.imageUrl);
                 if (data.imageUrl) {
@@ -307,11 +290,10 @@
 
             socket.on('disconnect', () => {
                 console.log('🔌 QR Screen disconnected');
-                showBanner('🔴 غير متصل - في انتظار إعادة الاتصال');
             });
 
             socket.on('connect_error', () => {
-                showBanner('⚠️ مشكلة في الاتصال بالخادم');
+                console.log('⚠️ Connection error');
             });
         }
 
