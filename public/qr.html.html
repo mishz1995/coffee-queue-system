@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة المقهى التفاعلية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            direction: rtl;
+        }
+        .screen-container {
+            background: #0f172a;
+            border-radius: 32px;
+            max-width: 900px;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .banner-screen {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .banner-screen.hidden {
+            display: none;
+        }
+        .banner-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 32px;
+            display: block;
+            background: #0f172a;
+        }
+        .qr-screen {
+            display: none;
+            padding: 30px 20px;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 32px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-screen.active {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+        .qr-large img {
+            width: 220px;
+            height: 220px;
+            margin: 10px auto;
+            border-radius: 16px;
+            background: white;
+            padding: 10px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        .order-number-display {
+            font-size: 38px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 8px;
+        }
+        .status-badge.waiting { background: #fef3c7; color: #92400e; }
+        .status-badge.preparing { background: #fef3c7; color: #92400e; }
+        .status-badge.ready { background: #d1fae5; color: #065f46; animation: pulse 1.5s infinite; }
+        .status-badge.completed { background: #f1f5f9; color: #64748b; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .btn-reset {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+        .btn-reset:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .shop-name-display {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            z-index: 1000;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        @media (max-width: 640px) {
+            .screen-container { aspect-ratio: 3 / 4; }
+            .qr-large img { width: 160px; height: 160px; }
+            .order-number-display { font-size: 28px; }
+            .shop-name-display { font-size: 12px; padding: 6px 16px; top: 10px; }
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .screen-container { max-width: 800px; }
+            .qr-large img { width: 250px; height: 250px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="shop-name-display" id="shopNameDisplay">☕ جاري التحميل...</div>
+    <button class="btn-reset" onclick="resetToBanner()">🔄 العودة للبانر</button>
+
+    <div class="screen-container" id="mainContainer">
+        <div class="banner-screen" id="bannerScreen">
+            <img id="bannerImage" class="banner-image" src="" alt="بانر المقهى">
+        </div>
+
+        <div class="qr-screen" id="qrScreen">
+            <h2 class="text-2xl font-bold text-gray-800">☕ رمز الطلب</h2>
+            <p class="text-gray-500 text-sm">اطبع أو اعرض هذا الرمز للعميل</p>
+            <div class="qr-large">
+                <img id="qrDisplayImage" src="" alt="QR Code">
+            </div>
+            <div class="order-number-display" id="qrOrderNumber">#0000</div>
+            <div class="text-gray-500 mt-1" id="qrCustomerName">-</div>
+            <div class="status-badge waiting" id="qrStatusBadge">⏳ في الانتظار</div>
+            <p class="text-xs text-gray-400 mt-3">🔄 سيتم التحديث تلقائياً عند مسح الرمز</p>
+        </div>
+    </div>
+
+    <script>
+        // ====== المتغيرات ======
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shop');
+        let socket = null;
+        let currentOrder = null;
+        let shopName = '';
+
+        // ====== عناصر الصفحة ======
+        const bannerScreen = document.getElementById('bannerScreen');
+        const qrScreen = document.getElementById('qrScreen');
+        const bannerImage = document.getElementById('bannerImage');
+        const shopNameDisplay = document.getElementById('shopNameDisplay');
+
+        // ====== جلب معلومات المقهى ======
+        async function loadShopInfo() {
+            if (!shopId) {
+                shopNameDisplay.textContent = '⚠️ لم يتم تحديد مقهى';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/shop-info/${shopId}`);
+                const data = await response.json();
+                if (data.success) {
+                    shopName = data.shop.name;
+                    shopNameDisplay.textContent = `☕ ${shopName}`;
+                    
+                    if (data.shop.bannerImage) {
+                        bannerImage.src = data.shop.bannerImage;
+                        bannerImage.style.display = 'block';
+                    }
+                } else {
+                    shopNameDisplay.textContent = '⚠️ مقهى غير موجود';
+                }
+            } catch (error) {
+                console.error('Error loading shop info:', error);
+                shopNameDisplay.textContent = '⚠️ خطأ في الاتصال';
+            }
+        }
+
+        // ====== جلب البانر ======
+        async function loadBanner() {
+            if (!shopId) return;
+            try {
+                const response = await fetch(`/api/shop-info/${shopId}`);
+                const data = await response.json();
+                if (data.success && data.shop.bannerImage) {
+                    bannerImage.src = data.shop.bannerImage;
+                    bannerImage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading banner:', error);
+            }
+        }
+
+        // ====== عرض البانر ======
+        function showBanner() {
+            bannerScreen.classList.remove('hidden');
+            qrScreen.classList.remove('active');
+        }
+
+        // ====== عرض QR ======
+        function showQR(order) {
+            bannerScreen.classList.add('hidden');
+            qrScreen.classList.add('active');
+            
+            if (order) {
+                document.getElementById('qrDisplayImage').src = order.qrCode || '';
+                document.getElementById('qrOrderNumber').textContent = `#${order.number}`;
+                document.getElementById('qrCustomerName').textContent = order.customerName || '-';
+                
+                const badge = document.getElementById('qrStatusBadge');
+                badge.className = 'status-badge';
+                const statusMap = {
+                    'waiting': { class: 'waiting', text: '⏳ في الانتظار' },
+                    'preparing': { class: 'preparing', text: '👨‍🍳 قيد التحضير' },
+                    'ready': { class: 'ready', text: '✅ جاهز للاستلام' },
+                    'completed': { class: 'completed', text: '📦 تم التسليم' }
+                };
+                const s = statusMap[order.status] || statusMap['waiting'];
+                badge.classList.add(s.class);
+                badge.textContent = s.text;
+            }
+        }
+
+        // ====== العودة للبانر ======
+        function resetToBanner() {
+            showBanner();
+            currentOrder = null;
+            if (socket && shopId) {
+                socket.emit('leave-shop', shopId);
+            }
+        }
+
+        // ====== تحديث الشاشة ======
+        function updateDisplay(order) {
+            if (!order) {
+                showBanner();
+                return;
+            }
+
+            console.log('🔄 Updating display for order:', order.id, 'Status:', order.status);
+
+            if (order.status === 'completed') {
+                showBanner();
+                return;
+            }
+
+            if (order.status !== 'waiting') {
+                showBanner();
+                return;
+            }
+
+            if (order.status === 'waiting') {
+                showQR(order);
+            }
+        }
+
+        // ====== Socket.io ======
+        function initSocket() {
+            socket = io({
+                withCredentials: true
+            });
+            
+            socket.on('connect', () => {
+                console.log('✅ QR Screen connected');
+                if (shopId) {
+                    socket.emit('join-shop', shopId);
+                    fetch(`/api/orders/active?shop=${shopId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success && data.orders && data.orders.length > 0) {
+                                const latestOrder = data.orders[data.orders.length - 1];
+                                if (latestOrder.status !== 'completed') {
+                                    currentOrder = latestOrder;
+                                    updateDisplay(latestOrder);
+                                }
+                            }
+                        })
+                        .catch(() => console.log('⚠️ Could not fetch active orders'));
+                }
+            });
+
+            socket.on('new-order-created', (order) => {
+                console.log('🆕 New order received:', order.id);
+                if (order.shopId === shopId) {
+                    currentOrder = order;
+                    updateDisplay(order);
+                }
+            });
+
+            socket.on('order-status-update', (order) => {
+                console.log('📦 Order status update:', order.id, order.status);
+                if (order.shopId === shopId) {
+                    if (currentOrder && currentOrder.id === order.id) {
+                        currentOrder = order;
+                        updateDisplay(order);
+                    } else if (!currentOrder) {
+                        currentOrder = order;
+                        updateDisplay(order);
+                    }
+                }
+            });
+
+            socket.on('banner-updated', (data) => {
+                console.log('🖼️ Banner updated:', data.imageUrl);
+                if (data.imageUrl) {
+                    bannerImage.src = data.imageUrl;
+                    bannerImage.style.display = 'block';
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.log('🔌 QR Screen disconnected');
+            });
+
+            socket.on('connect_error', () => {
+                console.log('⚠️ Connection error');
+            });
+        }
+
+        // ====== بدء التشغيل ======
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 QR Screen loaded, shopId:', shopId);
+            
+            if (!shopId) {
+                shopNameDisplay.textContent = '⚠️ الرجاء تحديد المقهى (?shop=ID)';
+                bannerImage.style.display = 'none';
+                return;
+            }
+            
+            loadShopInfo();
+            loadBanner();
+            initSocket();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (socket) socket.disconnect();
+        });
+    </script>
+</body>
+</html>

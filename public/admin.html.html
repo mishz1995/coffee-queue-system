@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم الرئيسية - نظام المقاهي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #f8fafc; font-family: system-ui, sans-serif; direction: rtl; padding: 20px; }
+        .admin-container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .header h1 { font-size: 24px; font-weight: 800; color: #1e293b; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card .number { font-size: 32px; font-weight: 800; color: #F59E0B; }
+        .stat-card .label { font-size: 14px; color: #94a3b8; }
+        .shop-table { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; }
+        .shop-table table { width: 100%; border-collapse: collapse; }
+        .shop-table th { text-align: right; padding: 12px; border-bottom: 2px solid #e2e8f0; color: #475569; font-size: 14px; }
+        .shop-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; }
+        .badge.active { background: #d1fae5; color: #065f46; }
+        .badge.inactive { background: #fee2e2; color: #991b1b; }
+        .badge.admin { background: #dbeafe; color: #1e40af; }
+        .btn { padding: 6px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s ease; }
+        .btn-toggle { background: #F59E0B; color: white; }
+        .btn-toggle:hover { background: #D97706; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
+        .btn-logout { background: #64748b; color: white; padding: 10px 24px; }
+        .btn-logout:hover { background: #475569; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 9999; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 16px; padding: 32px; max-width: 500px; width: 100%; }
+        .modal-content h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+        .form-group input { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+        .form-group input:focus { outline: none; border-color: #F59E0B; }
+        .form-actions { display: flex; gap: 12px; margin-top: 16px; }
+        .btn-submit { background: #F59E0B; color: white; padding: 10px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; }
+        .btn-cancel { background: #e2e8f0; color: #475569; padding: 10px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .loading-text { text-align: center; color: #94a3b8; padding: 20px; }
+        .qr-link { color: #34A853; text-decoration: none; font-size: 12px; }
+        .qr-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- الهيدر -->
+        <div class="header">
+            <div>
+                <h1>🏢 لوحة التحكم الرئيسية</h1>
+                <p style="color: #94a3b8; font-size: 14px;">إدارة جميع المقاهي والاشتراكات</p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="openAddShopModal()" class="btn btn-toggle" style="padding: 10px 24px;">➕ إضافة مقهى</button>
+                <button onclick="logout()" class="btn btn-logout">🚪 خروج</button>
+            </div>
+        </div>
+
+        <!-- الإحصائيات -->
+        <div class="stats">
+            <div class="stat-card"><div class="number" id="totalShops">0</div><div class="label">إجمالي المقاهي</div></div>
+            <div class="stat-card"><div class="number" id="activeShops" style="color:#10b981;">0</div><div class="label">المقاهي النشطة</div></div>
+            <div class="stat-card"><div class="number" id="inactiveShops" style="color:#ef4444;">0</div><div class="label">المقاهي الموقفة</div></div>
+        </div>
+
+        <!-- قائمة المقاهي -->
+        <div class="shop-table">
+            <h2 style="font-weight: 700; margin-bottom: 16px;">📋 قائمة المقاهي</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم المقهى</th>
+                        <th>اسم المستخدم</th>
+                        <th>رابط التقييم</th>
+                        <th>رابط QR</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="shopsList">
+                    <tr><td colspan="6" class="loading-text">⏳ جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- مودال إضافة مقهى -->
+    <div class="modal" id="addShopModal">
+        <div class="modal-content">
+            <h2>➕ إضافة مقهى جديد</h2>
+            <form id="addShopForm" onsubmit="addShop(event)">
+                <div class="form-group">
+                    <label>اسم المقهى</label>
+                    <input type="text" id="shopName" placeholder="مقهى MI" required>
+                </div>
+                <div class="form-group">
+                    <label>اسم المستخدم</label>
+                    <input type="text" id="shopUsername" placeholder="mi_cafe" required>
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="text" id="shopPassword" placeholder="********" required>
+                </div>
+                <div class="form-group">
+                    <label>رابط تقييم Google Maps</label>
+                    <input type="url" id="shopGoogleMaps" placeholder="https://g.page/.../review">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">✅ إضافة</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddShopModal()">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ====== جلب قائمة المقاهي ======
+        async function loadShops() {
+            try {
+                const response = await fetch('/api/admin/shops');
+                const data = await response.json();
+                if (data.success) {
+                    renderShops(data.shops);
+                    updateStats(data.shops);
+                }
+            } catch (error) {
+                console.error('Error loading shops:', error);
+                document.getElementById('shopsList').innerHTML = `
+                    <tr><td colspan="6" style="text-align:center; color:#ef4444; padding:20px;">❌ حدث خطأ في تحميل البيانات</td></tr>
+                `;
+            }
+        }
+
+        // ====== عرض المقاهي ======
+        function renderShops(shops) {
+            const tbody = document.getElementById('shopsList');
+            if (!shops || shops.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا توجد مقاهي مسجلة</td></tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = shops.map(shop => {
+                const isAdmin = shop.isAdmin || false;
+                const qrUrl = shop.id && shop.id !== 'shop_admin' ? `/qr?shop=${shop.id}` : '#';
+                
+                return `
+                <tr style="${isAdmin ? 'background:#f8fafc;' : ''}">
+                    <td style="font-weight:600;">${shop.name} ${isAdmin ? '<span class="badge admin">👑 مدير</span>' : ''}</td>
+                    <td style="color:#64748b;">${shop.username}</td>
+                    <td style="font-size:12px;">
+                        ${shop.googleMapsUrl ? 
+                            `<a href="${shop.googleMapsUrl}" target="_blank" class="qr-link">⭐ رابط التقييم</a>` : 
+                            '<span style="color:#94a3b8;">⚠️ غير محدد</span>'}
+                    </td>
+                    <td style="font-size:12px;">
+                        ${!isAdmin ? 
+                            `<a href="${qrUrl}" target="_blank" class="qr-link">📱 فتح QR</a>` : 
+                            '<span style="color:#94a3b8;">—</span>'}
+                    </td>
+                    <td>
+                        <span class="badge ${shop.isActive ? 'active' : 'inactive'}">
+                            ${shop.isActive ? '✅ نشط' : '⛔ موقف'}
+                        </span>
+                    </td>
+                    <td>
+                        ${!isAdmin ? `
+                            <button onclick="toggleShop('${shop.id}')" class="btn btn-toggle">
+                                ${shop.isActive ? '⏸️ إيقاف' : '▶️ تشغيل'}
+                            </button>
+                            <button onclick="deleteShop('${shop.id}')" class="btn btn-delete">🗑️</button>
+                        ` : `
+                            <span style="color:#94a3b8; font-size:12px;">🚫 غير قابل للتعديل</span>
+                        `}
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        // ====== تحديث الإحصائيات ======
+        function updateStats(shops) {
+            const total = shops.length;
+            const active = shops.filter(s => s.isActive).length;
+            const inactive = total - active;
+            
+            document.getElementById('totalShops').textContent = total;
+            document.getElementById('activeShops').textContent = active;
+            document.getElementById('inactiveShops').textContent = inactive;
+        }
+
+        // ====== تشغيل/إيقاف مقهى ======
+        async function toggleShop(shopId) {
+            if (!confirm('هل أنت متأكد من تغيير حالة هذا المقهى؟')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/shops/${shopId}/toggle`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadShops();
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error toggling shop:', error);
+                alert('❌ حدث خطأ');
+            }
+        }
+
+        // ====== حذف مقهى ======
+        async function deleteShop(shopId) {
+            if (!confirm('⚠️ هل أنت متأكد من حذف هذا المقهى نهائياً؟')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/shops/${shopId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadShops();
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting shop:', error);
+                alert('❌ حدث خطأ');
+            }
+        }
+
+        // ====== إضافة مقهى جديد ======
+        function openAddShopModal() {
+            document.getElementById('addShopModal').classList.add('show');
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopUsername').value = '';
+            document.getElementById('shopPassword').value = '';
+            document.getElementById('shopGoogleMaps').value = '';
+        }
+
+        function closeAddShopModal() {
+            document.getElementById('addShopModal').classList.remove('show');
+        }
+
+        async function addShop(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('shopName').value.trim();
+            const username = document.getElementById('shopUsername').value.trim();
+            const password = document.getElementById('shopPassword').value.trim();
+            const googleMapsUrl = document.getElementById('shopGoogleMaps').value.trim();
+            
+            if (!name || !username || !password) {
+                alert('⚠️ الرجاء ملء جميع الحقول المطلوبة');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/shops', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, username, password, googleMapsUrl })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeAddShopModal();
+                    loadShops();
+                    alert('✅ تم إضافة المقهى بنجاح!');
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error adding shop:', error);
+                alert('❌ حدث خطأ');
+            }
+        }
+
+        // ====== تسجيل الخروج ======
+        async function logout() {
+            if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        // ====== إغلاق المودال عند الضغط خارجها ======
+        document.getElementById('addShopModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddShopModal();
+        });
+
+        // ====== تهيئة الصفحة ======
+        document.addEventListener('DOMContentLoaded', function() {
+            loadShops();
+        });
+    </script>
+</body>
+</html>
