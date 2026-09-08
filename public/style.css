@@ -1250,4 +1250,85 @@ body {
         width: 250px;
         height: 250px;
     }
+
+    
+}
+
+/* ====== الوضع الليلي التلقائي للصفحة بأكملها ====== */
+@media (prefers-color-scheme: dark) {
+    /* الصفحة بأكملها */
+    html, body {
+        background: #0f172a !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* جميع الحاويات الرئيسية */
+    .container, .screen-container, .boarding-pass-wrapper, .completed-screen, .loading-screen {
+        background: #0f172a !important;
+    }
+
+    /* جميع البطاقات والعناصر البيضاء */
+    .boarding-pass-inner, .dashboard-header, .stat-card, .order-card, .modal-content, 
+    .qr-preview, .settings-section, .header, .shop-table, .login-container {
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* جميع النصوص */
+    h1, h2, h3, h4, h5, h6, p, span, div, label, .shop-name, .detail-value, 
+    .order-number-big, .order-name, .modal-content h2, .qr-preview .qr-label,
+    .dashboard-header h1, .stat-card .number {
+        color: #f1f5f9 !important;
+    }
+
+    /* النصوص الثانوية */
+    .subtitle, .pass-type, .order-number-label, .status-message, .time-section,
+    .qr-label, .detail-label, .order-time-text, .stat-card .label, .shop-table th {
+        color: #94a3b8 !important;
+    }
+
+    /* جميع الحقول (inputs) */
+    input, textarea, select {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+    input:focus, textarea:focus, select:focus {
+        border-color: #667eea !important;
+        outline: none !important;
+    }
+
+    /* جميع الأزرار الثانوية */
+    .btn-secondary, .btn-cancel {
+        background: #334155 !important;
+        color: #94a3b8 !important;
+    }
+
+    .btn-secondary:hover, .btn-cancel:hover {
+        background: #475569 !important;
+    }
+
+    /* الحدود والفواصل */
+    .detail-row:not(:last-child), .barcode-divider, .time-section, 
+    .shop-table th, .shop-table td {
+        border-color: #334155 !important;
+    }
+
+    /* خلفية المعاينة */
+    .qr-preview {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+    }
+
+    /* شريط الحالة السفلي */
+    .status-bar {
+        background: rgba(15, 23, 42, 0.95) !important;
+    }
+
+    /* مؤشر التحميل */
+    .loader {
+        border-color: #334155 !important;
+        border-top-color: #667eea !important;
+    }
 }
