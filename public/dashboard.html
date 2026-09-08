@@ -10,44 +10,50 @@
 </head>
 <body class="bg-gray-50">
     <div class="container mx-auto p-4 max-w-6xl">
-        <div class="dashboard-header">
+        <!-- الهيدر -->
+        <div class="dashboard-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <div>
                 <h1>☕ لوحة البارستا</h1>
-                <div class="subtitle">إدارة طلبات المقهى في الوقت الفعلي</div>
+                <div class="subtitle" id="shopNameDisplay">جاري التحميل...</div>
             </div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="display:flex;gap:12px;flex-wrap:wrap; align-items:center;">
+                <span id="shopStatusBadge" class="badge active" style="padding:4px 12px; border-radius:50px; font-size:12px; background:#d1fae5; color:#065f46;">✅ نشط</span>
                 <button onclick="openNewOrderModal()" class="btn btn-primary">➕ طلب جديد</button>
                 <button onclick="openBannerModal()" class="btn btn-secondary">🖼️ تغيير البانر</button>
-                <button onclick="refreshOrders()" class="btn btn-secondary">🔄 تحديث</button>
+                <button onclick="logout()" class="btn btn-danger" style="background:#ef4444; color:white; padding:8px 16px; border-radius:8px; border:none; cursor:pointer;">🚪 خروج</button>
             </div>
         </div>
         
+        <!-- الإحصائيات -->
         <div class="dashboard-stats">
-            <div class="stat-card">
-                <div class="number" id="totalOrders">0</div>
-                <div class="label">إجمالي الطلبات</div>
-            </div>
-            <div class="stat-card">
-                <div class="number yellow" id="waitingOrders">0</div>
-                <div class="label">في الانتظار</div>
-            </div>
-            <div class="stat-card">
-                <div class="number orange" id="preparingOrders">0</div>
-                <div class="label">قيد التحضير</div>
-            </div>
-            <div class="stat-card">
-                <div class="number green" id="readyOrders">0</div>
-                <div class="label">جاهز للاستلام</div>
-            </div>
+            <div class="stat-card"><div class="number" id="totalOrders">0</div><div class="label">إجمالي الطلبات</div></div>
+            <div class="stat-card"><div class="number yellow" id="waitingOrders">0</div><div class="label">في الانتظار</div></div>
+            <div class="stat-card"><div class="number orange" id="preparingOrders">0</div><div class="label">قيد التحضير</div></div>
+            <div class="stat-card"><div class="number green" id="readyOrders">0</div><div class="label">جاهز للاستلام</div></div>
         </div>
         
+        <!-- قائمة الطلبات -->
         <div class="bg-white rounded-xl shadow-sm p-4">
             <h2 class="text-lg font-bold text-gray-800 mb-4">📋 الطلبات النشطة</h2>
             <div id="ordersList" class="space-y-2">
-                <div class="text-center text-gray-400 py-8">
-                    لا توجد طلبات نشطة حالياً
-                </div>
+                <div class="text-center text-gray-400 py-8">لا توجد طلبات نشطة حالياً</div>
             </div>
+        </div>
+
+        <!-- إعدادات المقهى -->
+        <div class="settings-section" style="margin-top: 20px; padding: 20px; background: #f8fafc; border-radius: 16px;">
+            <h3 style="font-weight: 700; color: #1e293b; margin-bottom: 12px;">⚙️ إعدادات المقهى</h3>
+            
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <label style="font-weight: 600; color: #475569; min-width: 120px;">رابط تقييم Google Maps:</label>
+                <input type="url" id="googleMapsUrl" placeholder="https://g.page/your-coffee-shop/review" 
+                       style="flex:1; min-width:200px; padding:10px 14px; border:2px solid #e2e8f0; border-radius:8px; font-size:14px;">
+                <button onclick="saveGoogleMapsUrl()" class="btn btn-primary" style="background:#34A853; padding:10px 20px; border:none; border-radius:8px; color:white; font-weight:600; cursor:pointer;">
+                    💾 حفظ
+                </button>
+            </div>
+            
+            <div id="settingsMessage" style="margin-top:8px; font-size:14px; display:none;"></div>
         </div>
     </div>
     
@@ -93,7 +99,6 @@
         <div class="modal-content">
             <h2>🖼️ تغيير صورة البانر</h2>
             <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">اختر صورة لعرضها في شاشة QR</p>
-            
             <form id="bannerForm" onsubmit="uploadBanner(event)">
                 <div class="form-group">
                     <label>اختر صورة (JPG أو PNG)</label>
@@ -115,13 +120,103 @@
         let orders = [];
         let currentQRData = null;
         let currentOrderId = null;
+        let shopId = null;
 
+        // ====== التحقق من المصادقة ======
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-shop');
+                const data = await response.json();
+                if (data.success) {
+                    shopId = data.shop.id;
+                    document.getElementById('shopNameDisplay').textContent = `🏪 ${data.shop.name}`;
+                    document.getElementById('googleMapsUrl').value = data.shop.googleMapsUrl || '';
+                    return true;
+                } else {
+                    window.location.href = '/login.html';
+                    return false;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = '/login.html';
+                return false;
+            }
+        }
+
+        // ====== تسجيل الخروج ======
+        async function logout() {
+            if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        // ====== تحميل إعدادات المقهى ======
+        async function loadShopSettings() {
+            try {
+                const response = await fetch('/api/current-shop');
+                const data = await response.json();
+                if (data.success && data.shop) {
+                    document.getElementById('googleMapsUrl').value = data.shop.googleMapsUrl || '';
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        // ====== حفظ رابط Google Maps ======
+        async function saveGoogleMapsUrl() {
+            const url = document.getElementById('googleMapsUrl').value.trim();
+            const message = document.getElementById('settingsMessage');
+            
+            if (!url) {
+                message.textContent = '⚠️ الرجاء إدخال رابط صحيح';
+                message.style.color = '#ef4444';
+                message.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/shop/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ googleMapsUrl: url })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    message.textContent = '✅ تم حفظ الرابط بنجاح!';
+                    message.style.color = '#10b981';
+                    message.style.display = 'block';
+                } else {
+                    message.textContent = '❌ ' + data.error;
+                    message.style.color = '#ef4444';
+                    message.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                message.textContent = '❌ حدث خطأ في حفظ الإعدادات';
+                message.style.color = '#ef4444';
+                message.style.display = 'block';
+            }
+        }
+
+        // ====== Socket.io ======
         function initSocket() {
-            socket = io();
+            socket = io({
+                withCredentials: true
+            });
             
             socket.on('connect', () => {
                 console.log('✅ Dashboard connected');
-                socket.emit('get-active-orders');
+                if (shopId) {
+                    socket.emit('join-shop', shopId);
+                    socket.emit('get-active-orders', shopId);
+                }
             });
             
             socket.on('orders-update', (updatedOrders) => {
@@ -136,20 +231,14 @@
             });
         }
 
+        // ====== عرض الطلبات ======
         function renderOrders(ordersList) {
             const container = document.getElementById('ordersList');
-            
             if (!ordersList || ordersList.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-gray-400 py-8">
-                        🎉 لا توجد طلبات نشطة حالياً
-                    </div>
-                `;
+                container.innerHTML = `<div class="text-center text-gray-400 py-8">🎉 لا توجد طلبات نشطة حالياً</div>`;
                 return;
             }
-            
             const sorted = [...ordersList].sort((a, b) => a.number - b.number);
-            
             container.innerHTML = sorted.map(order => `
                 <div class="order-card status-${order.status}">
                     <div class="order-info">
@@ -157,14 +246,10 @@
                         <div>
                             <div class="order-name">${order.customerName}</div>
                             <div class="order-details-text">${order.orderDetails}</div>
-                            <div class="order-time-text">
-                                ${new Date(order.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
+                            <div class="order-time-text">${new Date(order.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</div>
                         </div>
                     </div>
-                    <div class="order-actions">
-                        ${getStatusButtons(order)}
-                    </div>
+                    <div class="order-actions">${getStatusButtons(order)}</div>
                 </div>
             `).join('');
         }
@@ -172,39 +257,18 @@
         function getStatusButtons(order) {
             const status = order.status;
             let buttons = '';
-            
             if (status === 'waiting') {
-                buttons += `
-                    <button onclick="updateOrder('${order.id}', 'preparing')" class="btn btn-prepare">
-                        🧑‍🍳 بدء التحضير
-                    </button>
-                `;
+                buttons += `<button onclick="updateOrder('${order.id}', 'preparing')" class="btn btn-prepare">🧑‍🍳 بدء التحضير</button>`;
             }
-            
             if (status === 'preparing') {
-                buttons += `
-                    <button onclick="updateOrder('${order.id}', 'ready')" class="btn btn-ready">
-                        ✅ جاهز
-                    </button>
-                `;
+                buttons += `<button onclick="updateOrder('${order.id}', 'ready')" class="btn btn-ready">✅ جاهز</button>`;
             }
-            
             if (status === 'ready') {
-                buttons += `
-                    <button onclick="updateOrder('${order.id}', 'completed')" class="btn btn-complete">
-                        📦 تم التسليم
-                    </button>
-                `;
+                buttons += `<button onclick="updateOrder('${order.id}', 'completed')" class="btn btn-complete">📦 تم التسليم</button>`;
             }
-            
             if (status !== 'completed') {
-                buttons += `
-                    <button onclick="showQR('${order.id}')" class="btn btn-qr">
-                        📱 QR
-                    </button>
-                `;
+                buttons += `<button onclick="showQR('${order.id}')" class="btn btn-qr">📱 QR</button>`;
             }
-            
             return buttons;
         }
 
@@ -213,7 +277,6 @@
             const waiting = ordersList.filter(o => o.status === 'waiting').length;
             const preparing = ordersList.filter(o => o.status === 'preparing').length;
             const ready = ordersList.filter(o => o.status === 'ready').length;
-            
             document.getElementById('totalOrders').textContent = total;
             document.getElementById('waitingOrders').textContent = waiting;
             document.getElementById('preparingOrders').textContent = preparing;
@@ -222,12 +285,15 @@
 
         function updateOrder(orderId, newStatus) {
             if (!socket) return;
-            socket.emit('update-order-status', { orderId, newStatus });
+            socket.emit('update-order-status', { orderId, newStatus }, (response) => {
+                if (response && !response.success) {
+                    alert('❌ ' + response.error);
+                }
+            });
         }
 
         function createNewOrder(event) {
             event.preventDefault();
-            
             const customerName = document.getElementById('customerNameInput').value.trim() || 'عميل';
             const orderDetails = document.getElementById('orderDetailsInput').value.trim() || 'طلب مقهى';
             
@@ -240,17 +306,11 @@
             .then(data => {
                 if (data.success) {
                     closeNewOrderModal();
-                    
                     currentOrderId = data.order.id;
-                    
                     showQR(data.order.id);
-                    
-                    if (socket) socket.emit('get-active-orders');
-                    
+                    if (socket) socket.emit('get-active-orders', shopId);
                     document.getElementById('customerNameInput').value = '';
                     document.getElementById('orderDetailsInput').value = '';
-                    
-                    console.log(`✅ Order created: ${data.order.id}`);
                 } else {
                     alert('حدث خطأ: ' + data.error);
                 }
@@ -283,19 +343,16 @@
             const printWindow = window.open('', '_blank');
             const qrImage = document.getElementById('qrModalImage').src;
             const orderNumber = document.getElementById('qrModalOrderNumber').textContent;
-            
             printWindow.document.write(`
-                <html>
-                    <head><title>QR Code - ${orderNumber}</title></head>
-                    <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:white;">
-                        <div style="text-align:center;padding:20px;border:2px dashed #e5e7eb;border-radius:12px;">
-                            <h2 style="margin-bottom:10px;color:#374151;">☕ مقهى السعادة</h2>
-                            <p style="color:#6b7280;margin-bottom:20px;">${orderNumber}</p>
-                            <img src="${qrImage}" style="max-width:250px;height:auto;margin:0 auto;">
-                            <p style="color:#9ca3af;font-size:12px;margin-top:20px;">امسح الرمز لمتابعة طلبك</p>
-                        </div>
-                    </body>
-                </html>
+                <html><head><title>QR Code - ${orderNumber}</title></head>
+                <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:white;">
+                    <div style="text-align:center;padding:20px;border:2px dashed #e5e7eb;border-radius:12px;">
+                        <h2 style="margin-bottom:10px;color:#374151;">☕ مقهى السعادة</h2>
+                        <p style="color:#6b7280;margin-bottom:20px;">${orderNumber}</p>
+                        <img src="${qrImage}" style="max-width:250px;height:auto;margin:0 auto;">
+                        <p style="color:#9ca3af;font-size:12px;margin-top:20px;">امسح الرمز لمتابعة طلبك</p>
+                    </div>
+                </body></html>
             `);
             printWindow.document.close();
             printWindow.print();
@@ -305,31 +362,23 @@
             document.getElementById('newOrderModal').style.display = 'flex';
             document.getElementById('customerNameInput').focus();
         }
-        
         function closeNewOrderModal() {
             document.getElementById('newOrderModal').style.display = 'none';
         }
-        
         function closeQRModal() {
             document.getElementById('qrModal').style.display = 'none';
         }
-        
-        function refreshOrders() {
-            if (socket) socket.emit('get-active-orders');
-        }
 
-        // ====== إدارة البانر ======
+        // ====== رفع البانر ======
         function openBannerModal() {
             document.getElementById('bannerModal').style.display = 'flex';
             document.getElementById('bannerFileInput').value = '';
             document.getElementById('bannerPreview').style.display = 'none';
         }
-
         function closeBannerModal() {
             document.getElementById('bannerModal').style.display = 'none';
         }
 
-        // معاينة الصورة قبل الرفع
         document.getElementById('bannerFileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -344,15 +393,12 @@
 
         function uploadBanner(event) {
             event.preventDefault();
-            
             const fileInput = document.getElementById('bannerFileInput');
             const file = fileInput.files[0];
-            
             if (!file) {
                 alert('الرجاء اختيار صورة');
                 return;
             }
-            
             const formData = new FormData();
             formData.append('bannerImage', file);
             
@@ -375,23 +421,24 @@
             });
         }
 
-        // إغلاق المودالات عند الضغط خارجها
+        // ====== إغلاق المودالات ======
         document.getElementById('newOrderModal').addEventListener('click', function(e) {
             if (e.target === this) closeNewOrderModal();
         });
-        
         document.getElementById('qrModal').addEventListener('click', function(e) {
             if (e.target === this) closeQRModal();
         });
-
         document.getElementById('bannerModal').addEventListener('click', function(e) {
             if (e.target === this) closeBannerModal();
         });
 
-        // تهيئة الصفحة
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('📋 Dashboard loaded');
-            initSocket();
+        // ====== تهيئة الصفحة ======
+        document.addEventListener('DOMContentLoaded', async function() {
+            const authenticated = await checkAuth();
+            if (authenticated) {
+                initSocket();
+                loadShopSettings();
+            }
         });
     </script>
 </body>
