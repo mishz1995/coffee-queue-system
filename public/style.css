@@ -8,9 +8,10 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f8fafc;
-    color: #1e293b;
+    background: #0f172a;
+    color: #f1f5f9;
     direction: rtl;
+    min-height: 100vh;
 }
 
 .container {
@@ -27,7 +28,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     padding: 20px;
-    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    background: #0f172a;
 }
 
 .boarding-pass {
@@ -46,7 +47,7 @@ body {
 }
 
 .boarding-pass-inner {
-    background: #ffffff;
+    background: #1e293b;
     border-radius: 21px;
     padding: 28px 24px;
 }
@@ -61,7 +62,7 @@ body {
 .shop-name {
     font-size: 20px;
     font-weight: 800;
-    color: #1e293b;
+    color: #f1f5f9;
 }
 
 .shop-name .emoji {
@@ -142,11 +143,11 @@ body {
 .status-message {
     margin-top: 8px;
     font-size: 14px;
-    color: #64748b;
+    color: #94a3b8;
 }
 
 .order-details {
-    background: #f8fafc;
+    background: #0f172a;
     border-radius: 12px;
     padding: 16px;
     margin: 12px 0;
@@ -159,7 +160,7 @@ body {
 }
 
 .detail-row:not(:last-child) {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #334155;
 }
 
 .detail-label {
@@ -173,7 +174,7 @@ body {
 .detail-value {
     font-size: 15px;
     font-weight: 600;
-    color: #1e293b;
+    color: #f1f5f9;
 }
 
 .time-section {
@@ -184,16 +185,16 @@ body {
     color: #94a3b8;
     margin: 8px 0 16px 0;
     padding: 8px 0;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px solid #334155;
 }
 
 .time-value {
     font-weight: 600;
-    color: #475569;
+    color: #94a3b8;
 }
 
 .barcode-divider {
-    border-top: 2px dashed #e2e8f0;
+    border-top: 2px dashed #334155;
     margin: 16px 0;
     position: relative;
 }
@@ -204,9 +205,9 @@ body {
     top: -12px;
     left: 50%;
     transform: translateX(-50%);
-    background: white;
+    background: #1e293b;
     padding: 0 12px;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 14px;
 }
 
@@ -218,10 +219,10 @@ body {
 }
 
 .qr-container {
-    background: white;
+    background: #1e293b;
     border-radius: 12px;
     padding: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .qr-container img {
@@ -240,8 +241,8 @@ body {
     display: none;
     margin-top: 16px;
     padding: 12px;
-    background: #ecfdf5;
-    border: 1px solid #6ee7b7;
+    background: #065f46;
+    border: 1px solid #10b981;
     border-radius: 12px;
     text-align: center;
 }
@@ -257,17 +258,17 @@ body {
 
 .notification-indicator .title {
     font-weight: 600;
-    color: #065f46;
+    color: #6ee7b7;
 }
 
 .notification-indicator .subtitle {
     font-size: 12px;
-    color: #6b7280;
+    color: #94a3b8;
 }
 
 /* ====== شاشة "تم التسليم" ====== */
 .completed-screen {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #0f172a;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -299,8 +300,8 @@ body {
 
 .completed-content .btn-reset {
     margin-top: 24px;
-    background: white;
-    color: #667eea;
+    background: #667eea;
+    color: white;
     padding: 12px 32px;
     border-radius: 12px;
     border: none;
@@ -312,7 +313,7 @@ body {
 
 .completed-content .btn-reset:hover {
     transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
 /* ====== شاشة التحميل ====== */
@@ -321,13 +322,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8fafc;
+    background: #0f172a;
 }
 
 .loader {
     width: 48px;
     height: 48px;
-    border: 4px solid #e2e8f0;
+    border: 4px solid #334155;
     border-top-color: #667eea;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -475,10 +476,10 @@ body {
 
 /* ====== لوحة التحكم (Dashboard) ====== */
 .dashboard-header {
-    background: white;
+    background: #1e293b;
     padding: 20px 24px;
     border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
@@ -490,7 +491,7 @@ body {
 .dashboard-header h1 {
     font-size: 24px;
     font-weight: 800;
-    color: #1e293b;
+    color: #f1f5f9;
 }
 
 .dashboard-header .subtitle {
@@ -506,17 +507,17 @@ body {
 }
 
 .stat-card {
-    background: white;
+    background: #1e293b;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     text-align: center;
 }
 
 .stat-card .number {
     font-size: 32px;
     font-weight: 800;
-    color: #1e293b;
+    color: #f1f5f9;
 }
 
 .stat-card .label {
@@ -540,50 +541,50 @@ body {
 
 /* ====== بطاقات الطلبات ====== */
 .order-card {
-    background: white;
+    background: #1e293b;
     border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
     transition: all 0.3s ease;
-    border-right: 4px solid #e2e8f0;
+    border-right: 4px solid #334155;
 }
 
 .order-card:hover {
     transform: translateX(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 .order-card.status-waiting {
     border-right-color: #f59e0b;
-    background: #fffbeb;
+    background: #1e293b;
 }
 
 .order-card.status-preparing {
     border-right-color: #f97316;
-    background: #fff7ed;
+    background: #1e293b;
 }
 
 .order-card.status-ready {
     border-right-color: #10b981;
-    background: #ecfdf5;
+    background: #1e293b;
     animation: pulse-card 2s infinite;
 }
 
 .order-card.status-completed {
-    border-right-color: #94a3b8;
+    border-right-color: #64748b;
     opacity: 0.7;
 }
 
 @keyframes pulse-card {
-    0% { background: #ecfdf5; }
-    50% { background: #d1fae5; }
-    100% { background: #ecfdf5; }
+    0% { background: #1e293b; }
+    50% { background: #2d3748; }
+    100% { background: #1e293b; }
 }
 
 .order-card .order-info {
@@ -596,23 +597,23 @@ body {
 .order-card .order-number-big {
     font-size: 28px;
     font-weight: 800;
-    color: #1e293b;
+    color: #f1f5f9;
     min-width: 60px;
 }
 
 .order-card .order-name {
     font-weight: 600;
-    color: #1e293b;
+    color: #f1f5f9;
 }
 
 .order-card .order-details-text {
     font-size: 14px;
-    color: #64748b;
+    color: #94a3b8;
 }
 
 .order-card .order-time-text {
     font-size: 12px;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .order-card .order-actions {
@@ -634,7 +635,7 @@ body {
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .btn:active {
@@ -643,7 +644,7 @@ body {
 
 .btn-prepare {
     background: #f59e0b;
-    color: white;
+    color: #0f172a;
 }
 
 .btn-ready {
@@ -652,7 +653,7 @@ body {
 }
 
 .btn-complete {
-    background: #6b7280;
+    background: #64748b;
     color: white;
 }
 
@@ -671,19 +672,19 @@ body {
 }
 
 .btn-secondary {
-    background: #e2e8f0;
-    color: #475569;
+    background: #334155;
+    color: #94a3b8;
 }
 
 .btn-secondary:hover {
-    background: #cbd5e1;
+    background: #475569;
 }
 
 /* ====== النوافذ المنبثقة (Modals) ====== */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -693,19 +694,19 @@ body {
 }
 
 .modal-content {
-    background: white;
+    background: #1e293b;
     border-radius: 16px;
     padding: 28px;
     max-width: 480px;
     width: 100%;
     animation: slideDown 0.3s ease;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .modal-content h2 {
     font-size: 20px;
     font-weight: 700;
-    color: #1e293b;
+    color: #f1f5f9;
     margin-bottom: 16px;
 }
 
@@ -717,16 +718,18 @@ body {
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #475569;
+    color: #94a3b8;
     margin-bottom: 4px;
 }
 
 .modal-content .form-group input {
     width: 100%;
     padding: 10px 14px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid #334155;
     border-radius: 8px;
     font-size: 15px;
+    background: #0f172a;
+    color: #f1f5f9;
     transition: border-color 0.3s ease;
 }
 
@@ -762,20 +765,20 @@ body {
 }
 
 .modal-content .form-actions .btn-cancel {
-    background: #e2e8f0;
-    color: #475569;
+    background: #334155;
+    color: #94a3b8;
 }
 
 .modal-content .form-actions .btn-cancel:hover {
-    background: #cbd5e1;
+    background: #475569;
 }
 
 .qr-preview {
-    border: 2px dashed #e2e8f0;
+    border: 2px dashed #334155;
     border-radius: 12px;
     padding: 20px;
     text-align: center;
-    background: #f8fafc;
+    background: #0f172a;
 }
 
 .qr-preview img {
@@ -787,7 +790,7 @@ body {
 .qr-preview .qr-label {
     margin-top: 8px;
     font-weight: 600;
-    color: #1e293b;
+    color: #f1f5f9;
 }
 
 /* ====== شاشة العرض (QR) ====== */
@@ -828,7 +831,7 @@ body {
     padding: 30px 20px;
     width: 100%;
     height: 100%;
-    background: white;
+    background: #1e293b;
     border-radius: 32px;
     flex-direction: column;
     align-items: center;
@@ -840,6 +843,18 @@ body {
     animation: fadeIn 0.5s ease;
 }
 
+.qr-screen h2 {
+    color: #f1f5f9 !important;
+}
+
+.qr-screen .text-gray-500 {
+    color: #94a3b8 !important;
+}
+
+.qr-screen .text-gray-800 {
+    color: #f1f5f9 !important;
+}
+
 .qr-large img {
     width: 220px;
     height: 220px;
@@ -847,7 +862,7 @@ body {
     border-radius: 16px;
     background: white;
     padding: 10px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
 }
 
 .shop-name-display {
@@ -855,7 +870,7 @@ body {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     color: white;
     padding: 8px 20px;
@@ -869,10 +884,10 @@ body {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     padding: 12px 24px;
     border-radius: 50px;
     font-size: 14px;
@@ -882,285 +897,260 @@ body {
 }
 
 .btn-reset:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.2);
 }
 
-/* ====== الوضع الليلي التلقائي (حسب إعدادات الجهاز) ====== */
-@media (prefers-color-scheme: dark) {
-    /* ====== عام ====== */
-    body {
-        background: #0f172a;
-        color: #f1f5f9;
-    }
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
 
-    /* ====== صفحة تسجيل الدخول (login.html) ====== */
-    .login-container {
-        background: #1e293b;
-    }
-    .login-container h1 {
-        color: #f1f5f9;
-    }
-    .login-container .subtitle {
-        color: #94a3b8;
-    }
-    .login-container .form-group label {
-        color: #94a3b8;
-    }
-    .login-container .form-group input {
-        background: #0f172a;
-        border-color: #334155;
-        color: #f1f5f9;
-    }
-    .login-container .form-group input:focus {
-        border-color: #F59E0B;
-    }
-    .demo-credentials {
-        background: #0f172a;
-        color: #94a3b8;
-    }
-    .demo-credentials strong {
-        color: #f1f5f9;
-    }
+/* ====== صفحة تسجيل الدخول ====== */
+.login-container {
+    background: #1e293b;
+    border-radius: 32px;
+    padding: 48px 40px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
 
-    /* ====== لوحة المدير (admin.html) ====== */
-    .header {
-        background: #1e293b;
-    }
-    .header h1 {
-        color: #f1f5f9;
-    }
-    .stat-card {
-        background: #1e293b;
-    }
-    .stat-card .number {
-        color: #f1f5f9;
-    }
-    .stat-card .label {
-        color: #94a3b8;
-    }
-    .shop-table {
-        background: #1e293b;
-    }
-    .shop-table th {
-        color: #94a3b8;
-        border-bottom-color: #334155;
-    }
-    .shop-table td {
-        border-bottom-color: #334155;
-        color: #f1f5f9;
-    }
-    .shop-table .loading-text {
-        color: #94a3b8;
-    }
+.login-container h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+}
 
-    /* ====== لوحة البارستا (dashboard.html) ====== */
-    .dashboard-header {
-        background: #1e293b;
-    }
-    .dashboard-header h1 {
-        color: #f1f5f9;
-    }
-    .dashboard-header .subtitle {
-        color: #94a3b8;
-    }
-    .stat-card {
-        background: #1e293b;
-    }
-    .stat-card .number {
-        color: #f1f5f9;
-    }
-    .stat-card .label {
-        color: #94a3b8;
-    }
-    .order-card {
-        background: #1e293b;
-    }
-    .order-card .order-number-big {
-        color: #f1f5f9;
-    }
-    .order-card .order-name {
-        color: #f1f5f9;
-    }
-    .order-card .order-details-text {
-        color: #94a3b8;
-    }
-    .order-card .order-time-text {
-        color: #64748b;
-    }
-    .order-card.status-waiting {
-        background: #1e293b;
-        border-right-color: #f59e0b;
-    }
-    .order-card.status-preparing {
-        background: #1e293b;
-        border-right-color: #f97316;
-    }
-    .order-card.status-ready {
-        background: #1e293b;
-        border-right-color: #10b981;
-    }
-    .order-card.status-completed {
-        background: #1e293b;
-        border-right-color: #94a3b8;
-    }
-    .settings-section {
-        background: #1e293b !important;
-    }
-    .settings-section h3 {
-        color: #f1f5f9 !important;
-    }
-    .settings-section label {
-        color: #94a3b8 !important;
-    }
-    .settings-section input {
-        background: #0f172a !important;
-        border-color: #334155 !important;
-        color: #f1f5f9 !important;
-    }
+.login-container .subtitle {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
 
-    /* ====== شاشة العرض (qr.html) ====== */
-    .screen-container {
-        background: #0f172a;
-    }
-    .banner-image {
-        background: #0f172a;
-    }
-    .qr-screen {
-        background: #1e293b;
-    }
-    .qr-screen h2 {
-        color: #f1f5f9 !important;
-    }
-    .qr-screen .text-gray-500 {
-        color: #94a3b8 !important;
-    }
-    .qr-screen .text-gray-800 {
-        color: #f1f5f9 !important;
-    }
-    .qr-screen .order-number-display {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .qr-screen .status-badge.waiting {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    .qr-screen .status-badge.preparing {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    .qr-screen .status-badge.ready {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .qr-screen .status-badge.completed {
-        background: #f1f5f9;
-        color: #64748b;
-    }
+.login-container .form-group {
+    margin-bottom: 16px;
+    text-align: right;
+}
 
-    /* ====== صفحة العميل (index.html) ====== */
-    .boarding-pass-wrapper {
-        background: #0f172a;
-    }
-    .boarding-pass-inner {
-        background: #1e293b;
-    }
-    .shop-name {
-        color: #f1f5f9;
-    }
-    .order-details {
-        background: #0f172a;
-    }
-    .detail-row:not(:last-child) {
-        border-bottom-color: #334155;
-    }
-    .detail-value {
-        color: #f1f5f9;
-    }
-    .status-message {
-        color: #94a3b8;
-    }
-    .barcode-divider {
-        border-color: #334155;
-    }
-    .barcode-divider::after {
-        background: #1e293b;
-        color: #64748b;
-    }
-    .qr-container {
-        background: #1e293b;
-    }
-    .time-section {
-        border-top-color: #334155;
-    }
-    .time-value {
-        color: #94a3b8;
-    }
-    .order-number-label {
-        color: #64748b;
-    }
-    .pass-type {
-        color: #64748b;
-    }
-    .completed-content h1 {
-        color: white;
-    }
-    .completed-content p {
-        color: rgba(255, 255, 255, 0.9);
-    }
+.login-container .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
 
-    /* ====== العناصر المشتركة ====== */
-    .modal-content {
-        background: #1e293b;
-    }
-    .modal-content h2 {
-        color: #f1f5f9;
-    }
-    .modal-content .form-group label {
-        color: #94a3b8;
-    }
-    .modal-content .form-group input {
-        background: #0f172a;
-        border-color: #334155;
-        color: #f1f5f9;
-    }
-    .modal-content .form-group input:focus {
-        border-color: #667eea;
-    }
-    .qr-preview {
-        background: #0f172a;
-        border-color: #334155;
-    }
-    .qr-preview .qr-label {
-        color: #f1f5f9;
-    }
-    .btn-secondary {
-        background: #334155;
-        color: #94a3b8;
-    }
-    .btn-secondary:hover {
-        background: #475569;
-    }
-    .status-bar {
-        background: rgba(15, 23, 42, 0.95);
-    }
-    .loading-screen {
-        background: #0f172a;
-    }
-    .loader {
-        border-color: #334155;
-        border-top-color: #667eea;
-    }
+.login-container .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #334155;
+    border-radius: 12px;
+    font-size: 16px;
+    background: #0f172a;
+    color: #f1f5f9;
+    transition: border-color 0.3s ease;
+}
 
-    /* ====== زر العودة (btn-reset) في qr.html ====== */
-    .btn-reset {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.15);
-    }
-    .btn-reset:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
+.login-container .form-group input:focus {
+    outline: none;
+    border-color: #F59E0B;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: #F59E0B;
+    color: #0f172a;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    background: #D97706;
+    transform: scale(1.02);
+}
+
+.btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 14px;
+    margin-top: 8px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+.footer-text {
+    margin-top: 16px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.demo-credentials {
+    background: #0f172a;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #94a3b8;
+    text-align: right;
+}
+
+.demo-credentials strong {
+    color: #f1f5f9;
+}
+
+/* ====== لوحة المدير (admin.html) ====== */
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #f1f5f9;
+}
+
+.shop-table {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    overflow-x: auto;
+}
+
+.shop-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.shop-table th {
+    text-align: right;
+    padding: 12px;
+    border-bottom: 2px solid #334155;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.shop-table td {
+    padding: 12px;
+    border-bottom: 1px solid #334155;
+    color: #f1f5f9;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge.active {
+    background: #065f46;
+    color: #6ee7b7;
+}
+
+.badge.inactive {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+
+.badge.admin {
+    background: #1e3a5f;
+    color: #93c5fd;
+}
+
+.loading-text {
+    text-align: center;
+    color: #94a3b8;
+    padding: 20px;
+}
+
+.qr-link {
+    color: #34A853;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.qr-link:hover {
+    text-decoration: underline;
+}
+
+/* ====== إعدادات المقهى ====== */
+.settings-section {
+    background: #1e293b !important;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.settings-section h3 {
+    color: #f1f5f9 !important;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.settings-section label {
+    color: #94a3b8 !important;
+    font-weight: 600;
+}
+
+.settings-section input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+    padding: 10px 14px;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.settings-section input:focus {
+    border-color: #F59E0B !important;
+    outline: none;
+}
+
+.btn-save {
+    background: #34A853;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    background: #2d9248;
 }
 
 /* ====== التوافق مع الشاشات الصغيرة ====== */
@@ -1239,6 +1229,19 @@ body {
         padding: 6px 16px;
         top: 10px;
     }
+
+    .login-container {
+        padding: 32px 20px;
+    }
+
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .shop-table {
+        padding: 16px;
+    }
 }
 
 /* ====== التوافق مع iPad ====== */
@@ -1249,86 +1252,5 @@ body {
     .qr-large img {
         width: 250px;
         height: 250px;
-    }
-
-    
-}
-
-/* ====== الوضع الليلي التلقائي للصفحة بأكملها ====== */
-@media (prefers-color-scheme: dark) {
-    /* الصفحة بأكملها */
-    html, body {
-        background: #0f172a !important;
-        color: #f1f5f9 !important;
-    }
-
-    /* جميع الحاويات الرئيسية */
-    .container, .screen-container, .boarding-pass-wrapper, .completed-screen, .loading-screen {
-        background: #0f172a !important;
-    }
-
-    /* جميع البطاقات والعناصر البيضاء */
-    .boarding-pass-inner, .dashboard-header, .stat-card, .order-card, .modal-content, 
-    .qr-preview, .settings-section, .header, .shop-table, .login-container {
-        background: #1e293b !important;
-        color: #f1f5f9 !important;
-    }
-
-    /* جميع النصوص */
-    h1, h2, h3, h4, h5, h6, p, span, div, label, .shop-name, .detail-value, 
-    .order-number-big, .order-name, .modal-content h2, .qr-preview .qr-label,
-    .dashboard-header h1, .stat-card .number {
-        color: #f1f5f9 !important;
-    }
-
-    /* النصوص الثانوية */
-    .subtitle, .pass-type, .order-number-label, .status-message, .time-section,
-    .qr-label, .detail-label, .order-time-text, .stat-card .label, .shop-table th {
-        color: #94a3b8 !important;
-    }
-
-    /* جميع الحقول (inputs) */
-    input, textarea, select {
-        background: #0f172a !important;
-        border-color: #334155 !important;
-        color: #f1f5f9 !important;
-    }
-
-    input:focus, textarea:focus, select:focus {
-        border-color: #667eea !important;
-        outline: none !important;
-    }
-
-    /* جميع الأزرار الثانوية */
-    .btn-secondary, .btn-cancel {
-        background: #334155 !important;
-        color: #94a3b8 !important;
-    }
-
-    .btn-secondary:hover, .btn-cancel:hover {
-        background: #475569 !important;
-    }
-
-    /* الحدود والفواصل */
-    .detail-row:not(:last-child), .barcode-divider, .time-section, 
-    .shop-table th, .shop-table td {
-        border-color: #334155 !important;
-    }
-
-    /* خلفية المعاينة */
-    .qr-preview {
-        background: #0f172a !important;
-        border-color: #334155 !important;
-    }
-
-    /* شريط الحالة السفلي */
-    .status-bar {
-        background: rgba(15, 23, 42, 0.95) !important;
-    }
-
-    /* مؤشر التحميل */
-    .loader {
-        border-color: #334155 !important;
-        border-top-color: #667eea !important;
     }
 }
