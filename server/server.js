@@ -5,8 +5,29 @@ const cors = require('cors');
 const QRCode = require('qrcode');
 const path = require('path');
 const os = require('os');
+const fs = require('fs'); // ⬅️ جديد
+const multer = require('multer'); // ⬅️ جديد (نحتاج تثبيته)
+
 require('dotenv').config();
 
+// ====== إعداد تخزين الصور ======
+const uploadDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `banner${ext}`);
+    }
+});
+const upload = multer({ storage: storage });
+
+// ====== باقي الإعدادات ======
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -16,165 +37,47 @@ const io = new Server(server, {
     }
 });
 
-// ====== الميدلوير ======
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ====== المسارات المخصصة ======
-app.get('/qr', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/qr.html'));
-});
-
-app.get('/service-worker.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(path.join(__dirname, '../public/service-worker.js'));
-});
-
-// ====== تخزين الطلبات ======
-const orders = new Map();
-let orderCounter = 1000;
-
-// ====== مسارات API ======
-app.post('/api/generate-qr', async (req, res) => {
+// ====== مسار رفع البانر ======
+app.post('/api/upload-banner', upload.single('bannerImage'), (req, res) => {
     try {
-        const { customerName, orderDetails } = req.body;
-        const orderNumber = ++orderCounter;
-        const orderId = `ORD-${orderNumber}`;
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'لم يتم رفع أي صورة' });
+        }
         
-        const order = {
-            id: orderId,
-            number: orderNumber,
-            customerName: customerName || 'عميل',
-            orderDetails: orderDetails || 'طلب مقهى',
-            status: 'waiting',
-            timestamp: new Date().toISOString(),
-            qrCode: ''
-        };
-
-        const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-        const orderUrl = `${baseUrl}?order=${orderId}`;
+        const imageUrl = `/uploads/${req.file.filename}`;
         
-        order.qrCode = await QRCode.toDataURL(orderUrl);
-        
-        orders.set(orderId, order);
-        
-        // ====== بث الطلب الجديد لجميع صفحات QR ======
-        io.emit('new-order-created', order);
-        console.log(`📢 New order broadcasted: ${orderId}`);
+        // بث تحديث البانر لجميع صفحات QR
+        io.emit('banner-updated', { imageUrl });
         
         res.json({
             success: true,
-            order: order,
-            qrCode: order.qrCode,
-            orderUrl: orderUrl
+            imageUrl: imageUrl,
+            message: 'تم تحديث البانر بنجاح!'
         });
     } catch (error) {
-        console.error('Error generating QR:', error);
+        console.error('Error uploading banner:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-app.get('/api/order/:orderId', (req, res) => {
-    const { orderId } = req.params;
-    const order = orders.get(orderId);
+// ====== مسار جلب البانر الحالي ======
+app.get('/api/current-banner', (req, res) => {
+    const bannerPath = path.join(uploadDir, 'banner.jpg');
+    const bannerPathPng = path.join(uploadDir, 'banner.png');
     
-    if (!order) {
-        return res.status(404).json({ success: false, error: 'Order not found' });
+    let imageUrl = null;
+    if (fs.existsSync(bannerPath)) {
+        imageUrl = '/uploads/banner.jpg';
+    } else if (fs.existsSync(bannerPathPng)) {
+        imageUrl = '/uploads/banner.png';
     }
     
-    res.json({ success: true, order });
+    res.json({ success: true, imageUrl });
 });
 
-app.get('/api/orders/active', (req, res) => {
-    const activeOrders = Array.from(orders.values())
-        .filter(order => order.status !== 'completed')
-        .sort((a, b) => a.number - b.number);
-    
-    res.json({ success: true, orders: activeOrders });
-});
-
-// ====== Socket.io ======
-io.on('connection', (socket) => {
-    console.log('🟢 New client connected:', socket.id);
-    
-    // انضمام عميل لغرفة طلب معين
-    socket.on('join-order', (orderId) => {
-        socket.join(orderId);
-        console.log(`📱 Client joined room: ${orderId}`);
-        
-        const order = orders.get(orderId);
-        if (order) {
-            socket.emit('order-status', order);
-        } else {
-            socket.emit('error', { message: 'Order not found' });
-        }
-    });
-    
-    // مغادرة غرفة الطلب
-    socket.on('leave-order', (orderId) => {
-        socket.leave(orderId);
-        console.log(`📱 Client left room: ${orderId}`);
-    });
-    
-    // تحديث حالة الطلب
-    socket.on('update-order-status', ({ orderId, newStatus }) => {
-        const order = orders.get(orderId);
-        if (!order) {
-            socket.emit('error', { message: 'Order not found' });
-            return;
-        }
-        
-        order.status = newStatus;
-        order.updatedAt = new Date().toISOString();
-        orders.set(orderId, order);
-        
-        console.log(`📦 Order ${orderId} status updated to: ${newStatus}`);
-        
-        // بث التحديث للعميل المحدد
-        io.to(orderId).emit('order-status', order);
-        
-        // بث التحديث لجميع صفحات QR
-        io.emit('order-status-update', order);
-        
-        // تحديث قائمة الطلبات النشطة للداشبورد
-        const activeOrders = Array.from(orders.values())
-            .filter(o => o.status !== 'completed')
-            .sort((a, b) => a.number - b.number);
-        io.emit('orders-update', activeOrders);
-    });
-    
-    // طلب قائمة الطلبات النشطة
-    socket.on('get-active-orders', () => {
-        const activeOrders = Array.from(orders.values())
-            .filter(order => order.status !== 'completed')
-            .sort((a, b) => a.number - b.number);
-        socket.emit('orders-update', activeOrders);
-    });
-    
-    socket.on('disconnect', () => {
-        console.log('🔴 Client disconnected:', socket.id);
-    });
-});
-
-// ====== تشغيل السيرفر ======
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📋 Dashboard: http://localhost:${PORT}/dashboard.html`);
-    console.log(`👤 Customer: http://localhost:${PORT}/index.html`);
-    console.log(`🖥️  Smart QR Screen: http://localhost:${PORT}/qr`);
-    console.log(`🧪 Test: http://localhost:${PORT}/simple.html`);
-    
-    console.log('\n📱 للوصول من الجوال:');
-    const interfaces = os.networkInterfaces();
-    for (const [name, ifaceList] of Object.entries(interfaces)) {
-        for (const iface of ifaceList) {
-            if (iface.family === 'IPv4' && !iface.internal) {
-                console.log(`   ➜ http://${iface.address}:${PORT}/qr`);
-            }
-        }
-    }
-    console.log('\n💡 أضف الصفحة للشاشة الرئيسية لتفعيل الإشعارات');
-});
+// ====== باقي المسارات (API و Socket.io) ======
+// ... (أضف الكود القديم هنا) ...
