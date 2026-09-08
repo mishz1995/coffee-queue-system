@@ -17,6 +17,7 @@
             </div>
             <div style="display:flex;gap:12px;flex-wrap:wrap;">
                 <button onclick="openNewOrderModal()" class="btn btn-primary">➕ طلب جديد</button>
+                <button onclick="openBannerModal()" class="btn btn-secondary">🖼️ تغيير البانر</button>
                 <button onclick="refreshOrders()" class="btn btn-secondary">🔄 تحديث</button>
             </div>
         </div>
@@ -84,6 +85,28 @@
                 <button onclick="closeQRModal()" class="btn-cancel">إغلاق</button>
                 <button onclick="printQR()" class="btn-submit">🖨️ طباعة</button>
             </div>
+        </div>
+    </div>
+
+    <!-- مودال رفع البانر -->
+    <div id="bannerModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>🖼️ تغيير صورة البانر</h2>
+            <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">اختر صورة لعرضها في شاشة QR</p>
+            
+            <form id="bannerForm" onsubmit="uploadBanner(event)">
+                <div class="form-group">
+                    <label>اختر صورة (JPG أو PNG)</label>
+                    <input type="file" id="bannerFileInput" accept="image/*" required style="width:100%;padding:8px;border:2px solid #e2e8f0;border-radius:8px;">
+                </div>
+                <div id="bannerPreview" style="margin:12px 0;text-align:center;display:none;">
+                    <img id="bannerPreviewImage" src="" alt="معاينة" style="max-width:100%;max-height:200px;border-radius:12px;border:2px solid #e2e8f0;">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">📤 رفع الصورة</button>
+                    <button type="button" class="btn-cancel" onclick="closeBannerModal()">إلغاء</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -220,13 +243,10 @@
                     
                     currentOrderId = data.order.id;
                     
-                    // عرض الـ QR في المودال
                     showQR(data.order.id);
                     
-                    // تحديث قائمة الطلبات
                     if (socket) socket.emit('get-active-orders');
                     
-                    // تفريغ الحقول
                     document.getElementById('customerNameInput').value = '';
                     document.getElementById('orderDetailsInput').value = '';
                     
@@ -298,6 +318,63 @@
             if (socket) socket.emit('get-active-orders');
         }
 
+        // ====== إدارة البانر ======
+        function openBannerModal() {
+            document.getElementById('bannerModal').style.display = 'flex';
+            document.getElementById('bannerFileInput').value = '';
+            document.getElementById('bannerPreview').style.display = 'none';
+        }
+
+        function closeBannerModal() {
+            document.getElementById('bannerModal').style.display = 'none';
+        }
+
+        // معاينة الصورة قبل الرفع
+        document.getElementById('bannerFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('bannerPreviewImage').src = event.target.result;
+                    document.getElementById('bannerPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function uploadBanner(event) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('bannerFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('الرجاء اختيار صورة');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('bannerImage', file);
+            
+            fetch('/api/upload-banner', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ تم تحديث البانر بنجاح!');
+                    closeBannerModal();
+                } else {
+                    alert('❌ حدث خطأ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading banner:', error);
+                alert('❌ حدث خطأ في رفع الصورة');
+            });
+        }
+
         // إغلاق المودالات عند الضغط خارجها
         document.getElementById('newOrderModal').addEventListener('click', function(e) {
             if (e.target === this) closeNewOrderModal();
@@ -305,6 +382,10 @@
         
         document.getElementById('qrModal').addEventListener('click', function(e) {
             if (e.target === this) closeQRModal();
+        });
+
+        document.getElementById('bannerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeBannerModal();
         });
 
         // تهيئة الصفحة
