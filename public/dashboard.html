@@ -218,7 +218,6 @@
                 if (data.success) {
                     closeNewOrderModal();
                     
-                    // حفظ معرف الطلب الحالي
                     currentOrderId = data.order.id;
                     
                     // عرض الـ QR في المودال
@@ -231,7 +230,6 @@
                     document.getElementById('customerNameInput').value = '';
                     document.getElementById('orderDetailsInput').value = '';
                     
-                    // رسالة تأكيد (اختياري)
                     console.log(`✅ Order created: ${data.order.id}`);
                 } else {
                     alert('حدث خطأ: ' + data.error);
