@@ -24,7 +24,7 @@
                 <div class="shop-header">
                     <div>
                         <div class="pass-type">بطاقة طلب</div>
-                        <div class="shop-name"><span class="emoji">☕</span> مقهى السعادة</div>
+                        <div class="shop-name" id="shopNameHeader"><span class="emoji">☕</span> مقهى السعادة</div>
                     </div>
                     <div class="order-number-container">
                         <div class="order-number-label">رقم الطلب</div>
@@ -77,13 +77,40 @@
         </div>
     </div>
     
+    <!-- ====== شاشة "تم التسليم" مع التقييم ====== -->
     <div id="completedScreen" class="completed-screen" style="display: none;">
         <div class="completed-content">
             <span class="big-emoji">🎉</span>
             <h1>شكراً لزيارتك!</h1>
             <p>تم تسليم طلبك بنجاح</p>
             <p style="margin-top: 4px;">نتمنى أن تستمتع بمشروبك ☕</p>
-            <button onclick="resetSession()" class="btn-reset">طلب جديد</button>
+
+            <!-- ====== عنصر التقييم ====== -->
+            <div class="rating-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); display: none;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
+                    <span style="font-size: 24px;">⭐</span>
+                    <span style="font-size: 18px; font-weight: 600;">قيمنا على Google Maps</span>
+                </div>
+                <p style="font-size: 14px; opacity: 0.8; margin-bottom: 12px;">
+                    شاركنا رأيك وساعدنا في تحسين خدماتنا
+                </p>
+                
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a id="ratingLink" href="https://g.page/your-coffee-shop/review" target="_blank" 
+                       class="rating-btn" 
+                       style="display: inline-flex; align-items: center; gap: 8px; background: #34A853; color: white; padding: 10px 24px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 15px; transition: all 0.3s ease; border: none; cursor: pointer;">
+                        ⭐ تقييم على Google
+                    </a>
+                    <button onclick="closeRating()" 
+                            style="background: rgba(255,255,255,0.15); color: white; padding: 10px 20px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.2); font-size: 14px; cursor: pointer; transition: all 0.3s ease;">
+                        تذكرني لاحقاً
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="resetSession()" class="btn-reset" style="margin-top: 20px;">
+                طلب جديد
+            </button>
         </div>
     </div>
 
@@ -95,10 +122,50 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('order');
+        const shopId = urlParams.get('shop');
         let socket = null;
         let orderData = null;
         let notificationPlayed = false;
+        let shopGoogleMapsUrl = 'https://g.page/your-coffee-shop/review';
 
+        // ====== جلب معلومات المقهى ======
+        async function loadShopInfo() {
+            if (!shopId) return;
+            try {
+                const response = await fetch(`/api/shop-info/${shopId}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('shopNameHeader').innerHTML = `<span class="emoji">☕</span> ${data.shop.name}`;
+                    if (data.shop.googleMapsUrl) {
+                        shopGoogleMapsUrl = data.shop.googleMapsUrl;
+                        document.getElementById('ratingLink').href = shopGoogleMapsUrl;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading shop info:', error);
+            }
+        }
+
+        // ====== عرض التقييم ======
+        function showRating() {
+            const ratingSection = document.querySelector('.rating-section');
+            if (ratingSection) {
+                ratingSection.style.display = 'block';
+                ratingSection.style.animation = 'fadeInUp 0.6s ease';
+            }
+        }
+
+        function closeRating() {
+            const ratingSection = document.querySelector('.rating-section');
+            if (ratingSection) {
+                ratingSection.style.display = 'none';
+            }
+            if (orderData && orderData.id) {
+                localStorage.setItem('rating_closed_' + orderData.id, 'true');
+            }
+        }
+
+        // ====== إشعارات ======
         function showInAppNotification(title, message, type = 'info') {
             const existing = document.querySelectorAll('.in-app-notification');
             existing.forEach(el => el.remove());
@@ -148,7 +215,6 @@
         function playSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
                 osc1.connect(gain1);
@@ -158,7 +224,6 @@
                 gain1.gain.value = 0.15;
                 osc1.start();
                 setTimeout(() => osc1.stop(), 400);
-                
                 setTimeout(() => {
                     const osc2 = audioCtx.createOscillator();
                     const gain2 = audioCtx.createGain();
@@ -170,7 +235,6 @@
                     osc2.start();
                     setTimeout(() => osc2.stop(), 300);
                 }, 300);
-                
                 setTimeout(() => {
                     const osc3 = audioCtx.createOscillator();
                     const gain3 = audioCtx.createGain();
@@ -191,7 +255,6 @@
             if (navigator.vibrate) {
                 navigator.vibrate([200, 100, 200, 100, 400]);
             }
-            
             const body = document.body;
             body.style.transition = 'background 0.1s';
             body.style.background = 'rgba(16, 185, 129, 0.1)';
@@ -203,7 +266,6 @@
         function playNotificationWithAlert() {
             playSound();
             triggerVibration();
-            
             if (orderData && orderData.status === 'ready') {
                 showInAppNotification(
                     '☕ طلبك جاهز!',
@@ -219,15 +281,12 @@
                     console.log('⚠️ Service Worker not supported');
                     return;
                 }
-                
                 const registration = await navigator.serviceWorker.register('/service-worker.js');
                 console.log('✅ Service Worker registered');
-                
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     console.log('✅ Notification permission granted');
                     updateStatus('success', 'الإشعارات مفعلة');
-                    
                     setTimeout(() => {
                         showInAppNotification('☕ مرحباً!', 'ستصلك التنبيهات عند تحديث طلبك', 'info');
                     }, 2000);
@@ -243,6 +302,7 @@
 
         function initSocket() {
             socket = io({
+                withCredentials: true,
                 reconnection: true,
                 reconnectionAttempts: 10,
                 reconnectionDelay: 1000
@@ -251,7 +311,6 @@
             socket.on('connect', () => {
                 console.log('✅ Connected to server');
                 updateStatus('success', '🟢 متصل');
-                
                 if (orderId) {
                     socket.emit('join-order', orderId);
                 }
@@ -270,7 +329,6 @@
                         'ready': '✅ طلبك جاهز للاستلام!',
                         'completed': '📦 تم تسليم طلبك'
                     };
-                    
                     const titles = {
                         'waiting': '⏳ في الانتظار',
                         'preparing': '👨‍🍳 بدأ التحضير',
@@ -284,7 +342,6 @@
                             statusMessages[order.status] || '',
                             order.status === 'ready' ? 'success' : 'info'
                         );
-                        
                         if ('Notification' in window && Notification.permission === 'granted') {
                             try {
                                 new Notification(titles[order.status] || '☕ تحديث', {
@@ -328,6 +385,12 @@
             if (order.status === 'completed') {
                 document.getElementById('customerScreen').style.display = 'none';
                 document.getElementById('completedScreen').style.display = 'flex';
+                
+                // إظهار التقييم إذا لم يتم إغلاقه
+                const ratingClosed = localStorage.getItem('rating_closed_' + order.id);
+                if (!ratingClosed) {
+                    setTimeout(showRating, 800);
+                }
                 return;
             }
             
@@ -392,9 +455,14 @@
             window.location.href = '/';
         }
 
+        // ====== بدء التشغيل ======
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📱 Page loaded');
             console.log('📱 Order ID:', orderId);
+            console.log('📱 Shop ID:', shopId);
+            
+            // تحميل معلومات المقهى
+            loadShopInfo();
             
             if (orderId) {
                 localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
@@ -411,7 +479,7 @@
                 if (savedOrder) {
                     const savedOrderId = JSON.parse(savedOrder).id;
                     if (savedOrderId) {
-                        window.location.href = `/?order=${savedOrderId}`;
+                        window.location.href = `/?order=${savedOrderId}&shop=${shopId || ''}`;
                         return;
                     }
                 }
@@ -424,9 +492,6 @@
                         <p class="text-sm text-gray-500 mt-2">يرجى مسح رمز QR الخاص بطلبك</p>
                         <div class="mt-6 flex flex-col gap-3">
                             <a href="/dashboard.html" class="inline-block text-purple-600 hover:underline">📋 لوحة التحكم</a>
-                            <button onclick="window.location.href='/?order=ORD-1001'" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
-                                🔄 تجربة طلب تجريبي (ORD-1001)
-                            </button>
                         </div>
                     </div>
                 `;
