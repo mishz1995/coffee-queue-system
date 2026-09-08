@@ -19,6 +19,7 @@ body {
     padding: 0 16px;
 }
 
+/* ====== بطاقة الطلب (Boarding Pass) ====== */
 .boarding-pass-wrapper {
     display: flex;
     flex-direction: column;
@@ -264,6 +265,7 @@ body {
     color: #6b7280;
 }
 
+/* ====== شاشة "تم التسليم" ====== */
 .completed-screen {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
@@ -313,6 +315,7 @@ body {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
+/* ====== شاشة التحميل ====== */
 .loading-screen {
     min-height: 100vh;
     display: flex;
@@ -335,6 +338,7 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* ====== الإشعارات المنبثقة ====== */
 .in-app-notification {
     position: fixed;
     top: 20px;
@@ -424,6 +428,7 @@ body {
     }
 }
 
+/* ====== شريط الحالة السفلي ====== */
 .status-bar {
     position: fixed;
     bottom: 20px;
@@ -468,6 +473,7 @@ body {
     100% { opacity: 1; }
 }
 
+/* ====== لوحة التحكم (Dashboard) ====== */
 .dashboard-header {
     background: white;
     padding: 20px 24px;
@@ -532,6 +538,7 @@ body {
     color: #10b981;
 }
 
+/* ====== بطاقات الطلبات ====== */
 .order-card {
     background: white;
     border-radius: 12px;
@@ -614,6 +621,7 @@ body {
     flex-wrap: wrap;
 }
 
+/* ====== الأزرار ====== */
 .btn {
     padding: 8px 16px;
     border-radius: 8px;
@@ -671,6 +679,7 @@ body {
     background: #cbd5e1;
 }
 
+/* ====== النوافذ المنبثقة (Modals) ====== */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -781,377 +790,102 @@ body {
     color: #1e293b;
 }
 
-@media (max-width: 640px) {
-    .boarding-pass-inner {
-        padding: 20px 16px;
-    }
-    
-    .order-number-display {
-        font-size: 28px;
-    }
-    
-    .shop-name {
-        font-size: 17px;
-    }
-    
-    .order-card {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .order-card .order-info {
-        flex-wrap: wrap;
-    }
-    
-    .order-card .order-actions {
-        justify-content: center;
-    }
-    
-    .dashboard-header {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-    }
-    
-    .dashboard-stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .modal-content {
-        padding: 20px;
-        margin: 16px;
-    }
-    
-    .status-bar {
-        font-size: 11px;
-        padding: 8px 14px;
-        bottom: 12px;
-    }
-    
-    .in-app-notification {
-        padding: 12px 16px;
-        top: 12px;
-    }
-    
-    .in-app-notification .notif-title {
-        font-size: 16px;
-    }
-    
-    .in-app-notification .notif-body {
-        font-size: 13px;
-    }
+/* ====== شاشة العرض (QR) ====== */
+.screen-container {
+    background: #0f172a;
+    border-radius: 32px;
+    max-width: 900px;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    text-align: center;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-    body {
-        background: #0f172a;
-        color: #f1f5f9;
-    }
-    
-    .boarding-pass-inner {
-        background: #1e293b;
-    }
-    
-    .shop-name {
-        color: #f1f5f9;
-    }
-    
-    .order-details {
-        background: #0f172a;
-    }
-    
-    .detail-row:not(:last-child) {
-        border-bottom-color: #334155;
-    }
-    
-    .detail-value {
-        color: #f1f5f9;
-    }
-    
-    .status-message {
-        color: #94a3b8;
-    }
-    
-    .barcode-divider {
-        border-color: #334155;
-    }
-    
-    .barcode-divider::after {
-        background: #1e293b;
-        color: #64748b;
-    }
-    
-    .qr-container {
-        background: #1e293b;
-    }
-    
-    .time-section {
-        border-top-color: #334155;
-    }
-    
-    .time-value {
-        color: #94a3b8;
-    }
-    
-    .order-number-label {
-        color: #64748b;
-    }
-    
-    .pass-type {
-        color: #64748b;
-    }
-    
-    .dashboard-header {
-        background: #1e293b;
-    }
-    
-    .dashboard-header h1 {
-        color: #f1f5f9;
-    }
-    
-    .stat-card {
-        background: #1e293b;
-    }
-    
-    .stat-card .number {
-        color: #f1f5f9;
-    }
-    
-    .order-card {
-        background: #1e293b;
-    }
-    
-    .order-card .order-number-big {
-        color: #f1f5f9;
-    }
-    
-    .order-card .order-name {
-        color: #f1f5f9;
-    }
-    
-    .order-card .order-details-text {
-        color: #94a3b8;
-    }
-    
-    .order-card.status-waiting {
-        background: #1e293b;
-    }
-    
-    .order-card.status-preparing {
-        background: #1e293b;
-    }
-    
-    .order-card.status-ready {
-        background: #1e293b;
-    }
-    
-    .modal-content {
-        background: #1e293b;
-    }
-    
-    .modal-content h2 {
-        color: #f1f5f9;
-    }
-    
-    .modal-content .form-group label {
-        color: #94a3b8;
-    }
-    
-    .modal-content .form-group input {
-        background: #0f172a;
-        border-color: #334155;
-        color: #f1f5f9;
-    }
-    
-    .modal-content .form-group input:focus {
-        border-color: #667eea;
-    }
-    
-    .qr-preview {
-        background: #0f172a;
-        border-color: #334155;
-    }
-    
-    .qr-preview .qr-label {
-        color: #f1f5f9;
-    }
-    
-    .btn-secondary {
-        background: #334155;
-        color: #94a3b8;
-    }
-    
-    .btn-secondary:hover {
-        background: #475569;
-    }
-    
-    .status-bar {
-        background: rgba(15, 23, 42, 0.95);
-    }
-    
-    .completed-content h1 {
-        color: white;
-    }
-    
-    .completed-content p {
-        color: rgba(255, 255, 255, 0.9);
-    }
-    /* ====== الوضع الليلي التلقائي (حسب إعدادات الجهاز) ====== */
-@media (prefers-color-scheme: dark) {
-    body {
-        background: #0f172a;
-        color: #f1f5f9;
-    }
+.banner-screen {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
 
-    .boarding-pass-inner {
-        background: #1e293b;
-    }
+.banner-screen.hidden {
+    display: none;
+}
 
-    .shop-name {
-        color: #f1f5f9;
-    }
+.banner-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 32px;
+    display: block;
+    background: #0f172a;
+}
 
-    .order-details {
-        background: #0f172a;
-    }
+.qr-screen {
+    display: none;
+    padding: 30px 20px;
+    width: 100%;
+    height: 100%;
+    background: white;
+    border-radius: 32px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 
-    .detail-row:not(:last-child) {
-        border-bottom-color: #334155;
-    }
+.qr-screen.active {
+    display: flex;
+    animation: fadeIn 0.5s ease;
+}
 
-    .detail-value {
-        color: #f1f5f9;
-    }
+.qr-large img {
+    width: 220px;
+    height: 220px;
+    margin: 10px auto;
+    border-radius: 16px;
+    background: white;
+    padding: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
 
-    .status-message {
-        color: #94a3b8;
-    }
+.shop-name-display {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-    .barcode-divider {
-        border-color: #334155;
-    }
+.btn-reset {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.3s ease;
+}
 
-    .barcode-divider::after {
-        background: #1e293b;
-        color: #64748b;
-    }
+.btn-reset:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
 
-    .qr-container {
-        background: #1e293b;
-    }
-
-    .time-section {
-        border-top-color: #334155;
-    }
-
-    .time-value {
-        color: #94a3b8;
-    }
-
-    .order-number-label {
-        color: #64748b;
-    }
-
-    .pass-type {
-        color: #64748b;
-    }
-
-    .dashboard-header {
-        background: #1e293b;
-    }
-
-    .dashboard-header h1 {
-        color: #f1f5f9;
-    }
-
-    .stat-card {
-        background: #1e293b;
-    }
-
-    .stat-card .number {
-        color: #f1f5f9;
-    }
-
-    .order-card {
-        background: #1e293b;
-    }
-
-    .order-card .order-number-big {
-        color: #f1f5f9;
-    }
-
-    .order-card .order-name {
-        color: #f1f5f9;
-    }
-
-    .order-card .order-details-text {
-        color: #94a3b8;
-    }
-
-    .order-card.status-waiting {
-        background: #1e293b;
-    }
-
-    .order-card.status-preparing {
-        background: #1e293b;
-    }
-
-    .order-card.status-ready {
-        background: #1e293b;
-    }
-
-    .modal-content {
-        background: #1e293b;
-    }
-
-    .modal-content h2 {
-        color: #f1f5f9;
-    }
-
-    .modal-content .form-group label {
-        color: #94a3b8;
-    }
-
-    .modal-content .form-group input {
-        background: #0f172a;
-        border-color: #334155;
-        color: #f1f5f9;
-    }
-
-    .modal-content .form-group input:focus {
-        border-color: #667eea;
-    }
-
-    .qr-preview {
-        background: #0f172a;
-        border-color: #334155;
-    }
-
-    .qr-preview .qr-label {
-        color: #f1f5f9;
-    }
-
-    .btn-secondary {
-        background: #334155;
-        color: #94a3b8;
-    }
-
-    .btn-secondary:hover {
-        background: #475569;
-    }
-
-    .status-bar {
-        background: rgba(15, 23, 42, 0.95);
-    }
-
-    .completed-content h1 {
-        color: white;
-    }
-
-    .completed-content p {
-        color: rgba(255, 255, 255, 0.9);
-    }
-    /* ====== الوضع الليلي التلقائي (حسب إعدادات الجهاز) ====== */
+/* ====== الوضع الليلي التلقائي (حسب إعدادات الجهاز) ====== */
 @media (prefers-color-scheme: dark) {
     /* ====== عام ====== */
     body {
@@ -1217,23 +951,6 @@ body {
     }
     .shop-table .loading-text {
         color: #94a3b8;
-    }
-    .modal-content {
-        background: #1e293b;
-    }
-    .modal-content h2 {
-        color: #f1f5f9;
-    }
-    .modal-content .form-group label {
-        color: #94a3b8;
-    }
-    .modal-content .form-group input {
-        background: #0f172a;
-        border-color: #334155;
-        color: #f1f5f9;
-    }
-    .modal-content .form-group input:focus {
-        border-color: #F59E0B;
     }
 
     /* ====== لوحة البارستا (dashboard.html) ====== */
@@ -1343,6 +1060,9 @@ body {
     }
 
     /* ====== صفحة العميل (index.html) ====== */
+    .boarding-pass-wrapper {
+        background: #0f172a;
+    }
     .boarding-pass-inner {
         background: #1e293b;
     }
@@ -1425,5 +1145,109 @@ body {
     .status-bar {
         background: rgba(15, 23, 42, 0.95);
     }
+    .loading-screen {
+        background: #0f172a;
+    }
+    .loader {
+        border-color: #334155;
+        border-top-color: #667eea;
+    }
+
+    /* ====== زر العودة (btn-reset) في qr.html ====== */
+    .btn-reset {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .btn-reset:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
 }
+
+/* ====== التوافق مع الشاشات الصغيرة ====== */
+@media (max-width: 640px) {
+    .boarding-pass-inner {
+        padding: 20px 16px;
+    }
+    
+    .order-number-display {
+        font-size: 28px;
+    }
+    
+    .shop-name {
+        font-size: 17px;
+    }
+    
+    .order-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .order-card .order-info {
+        flex-wrap: wrap;
+    }
+    
+    .order-card .order-actions {
+        justify-content: center;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .modal-content {
+        padding: 20px;
+        margin: 16px;
+    }
+    
+    .status-bar {
+        font-size: 11px;
+        padding: 8px 14px;
+        bottom: 12px;
+    }
+    
+    .in-app-notification {
+        padding: 12px 16px;
+        top: 12px;
+    }
+    
+    .in-app-notification .notif-title {
+        font-size: 16px;
+    }
+    
+    .in-app-notification .notif-body {
+        font-size: 13px;
+    }
+
+    .screen-container {
+        aspect-ratio: 3 / 4;
+    }
+    .qr-large img {
+        width: 160px;
+        height: 160px;
+    }
+    .order-number-display {
+        font-size: 28px;
+    }
+    .shop-name-display {
+        font-size: 12px;
+        padding: 6px 16px;
+        top: 10px;
+    }
+}
+
+/* ====== التوافق مع iPad ====== */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .screen-container {
+        max-width: 800px;
+    }
+    .qr-large img {
+        width: 250px;
+        height: 250px;
+    }
 }
