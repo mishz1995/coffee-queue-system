@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Order Card - Order Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/i18n.js"></script>
+</head>
+<body>
+    <div id="loadingScreen" class="loading-screen">
+        <div class="text-center">
+            <div class="loader"></div>
+            <p style="color:var(--text-color);" data-i18n="loading">جاري التحميل...</p>
+        </div>
+    </div>
+    
+    <div id="customerScreen" class="boarding-pass-wrapper" style="display: none;">
+        <div class="boarding-pass">
+            <div class="boarding-pass-inner">
+                <div class="shop-header">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <img id="shopLogo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E☕%3C/text%3E%3C/svg%3E" alt="Logo" style="width:48px; height:48px; border-radius:50%; object-fit:cover; display:none;">
+                        <div>
+                            <div class="pass-type" data-i18n="customer_order_card">بطاقة طلب</div>
+                            <div class="shop-name" id="shopNameHeader">☕ Coffee Shop</div>
+                        </div>
+                    </div>
+                    <div class="order-number-container">
+                        <div class="order-number-label" data-i18n="customer_order_number">رقم الطلب</div>
+                        <div class="order-number-display" id="orderNumber">0000</div>
+                    </div>
+                </div>
+                
+                <div class="status-section">
+                    <div id="statusBadge" class="status-badge waiting">
+                        <span id="statusText" data-i18n="customer_status_waiting">في الانتظار</span>
+                    </div>
+                    <div id="statusMessage" class="status-message"></div>
+                </div>
+                
+                <div class="order-details">
+                    <div class="detail-row">
+                        <span class="detail-label" data-i18n="customer_order_details">تفاصيل الطلب</span>
+                        <span class="detail-value" id="orderDetails">-</span>
+                    </div>
+                </div>
+                
+                <div class="time-section">
+                    <span data-i18n="customer_order_time">🕐 وقت الطلب</span>
+                    <span class="time-value" id="orderTime">-</span>
+                </div>
+                
+                <div class="barcode-divider"></div>
+                
+                <div class="qr-section">
+                    <div class="qr-container">
+                        <img id="qrCodeImage" src="" alt="QR Code">
+                    </div>
+                    <div class="qr-label" data-i18n="qr_scan">امسح الرمز لمتابعة طلبك</div>
+                </div>
+                
+                <div id="notificationIndicator" class="notification-indicator">
+                    <div class="icon">🔔</div>
+                    <div class="title" data-i18n="customer_ready_notification">طلبك جاهز!</div>
+                    <div class="subtitle" data-i18n="customer_ready_subtitle">سيتم تشغيل التنبيه والاهتزاز</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center text-xs" style="color:#94a3b8; margin-top:16px;">
+            <span data-i18n="customer_auto_update">🔄 يتم التحديث تلقائياً</span>
+        </div>
+    </div>
+    
+    <!-- ====== شاشة "تم التسليم" مع التقييم ====== -->
+    <div id="completedScreen" class="completed-screen" style="display: none;">
+        <div class="completed-content">
+            <span class="big-emoji">🎉</span>
+            <h1 data-i18n="customer_thanks">شكراً لزيارتك!</h1>
+            <p data-i18n="customer_order_delivered">تم تسليم طلبك بنجاح</p>
+            <p style="margin-top: 4px;" data-i18n="customer_enjoy">نتمنى أن تستمتع بمشروبك ☕</p>
+
+            <div class="rating-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); display: none;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
+                    <span style="font-size: 24px;">⭐</span>
+                    <span style="font-size: 18px; font-weight: 600;" data-i18n="customer_rate_us">قيمنا على Google Maps</span>
+                </div>
+                <p style="font-size: 14px; opacity: 0.8; margin-bottom: 12px;" data-i18n="customer_rate_desc">
+                    شاركنا رأيك وساعدنا في تحسين خدماتنا
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a id="ratingLink" href="https://g.page/your-coffee-shop/review" target="_blank" 
+                       class="rating-btn" 
+                       style="display: inline-flex; align-items: center; gap: 8px; background: #34A853; color: white; padding: 10px 24px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 15px; transition: all 0.3s ease; border: none; cursor: pointer;"
+                       data-i18n="customer_rate_button">
+                        ⭐ تقييم على Google
+                    </a>
+                    <button onclick="closeRating()" 
+                            style="background: rgba(255,255,255,0.15); color: white; padding: 10px 20px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.2); font-size: 14px; cursor: pointer; transition: all 0.3s ease;"
+                            data-i18n="customer_remind_later">
+                        تذكرني لاحقاً
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="resetSession()" class="btn-reset" style="margin-top: 20px;" data-i18n="customer_new_order">
+                طلب جديد
+            </button>
+        </div>
+    </div>
+
+    <div id="statusBar" class="status-bar">
+        <span class="dot green" id="statusDot"></span>
+        <span id="statusText2" data-i18n="status_ready_bar">🟢 جاهز</span>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order');
+        const shopId = urlParams.get('shop');
+        let socket = null;
+        let orderData = null;
+        let notificationPlayed = false;
+        let shopGoogleMapsUrl = 'https://g.page/your-coffee-shop/review';
+
+        function applySettings(settings, logo) {
+            const root = document.documentElement;
+            
+            if (settings.primaryColor) root.style.setProperty('--primary-color', settings.primaryColor);
+            if (settings.secondaryColor) root.style.setProperty('--secondary-color', settings.secondaryColor);
+            if (settings.backgroundColor) root.style.setProperty('--bg-color', settings.backgroundColor);
+            if (settings.textColor) root.style.setProperty('--text-color', settings.textColor);
+            if (settings.cardColor) root.style.setProperty('--card-color', settings.cardColor);
+            if (settings.buttonColor) root.style.setProperty('--button-color', settings.buttonColor);
+            if (settings.headerColor) root.style.setProperty('--header-color', settings.headerColor);
+            if (settings.borderRadius) root.style.setProperty('--border-radius', settings.borderRadius);
+            if (settings.fontFamily) root.style.setProperty('--font-family', settings.fontFamily);
+            
+            if (settings.darkMode) {
+                document.body.classList.add('dark-mode');
+                if (settings.darkBackground) root.style.setProperty('--bg-color', settings.darkBackground);
+                if (settings.darkText) root.style.setProperty('--text-color', settings.darkText);
+                if (settings.darkCard) root.style.setProperty('--card-color', settings.darkCard);
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            if (logo) {
+                const logoEl = document.getElementById('shopLogo');
+                logoEl.src = logo + '?t=' + Date.now();
+                logoEl.style.display = 'block';
+            }
+        }
+
+        async function loadShopInfo() {
+            if (!shopId) return;
+            try {
+                const response = await fetch(`/api/shop-info/${shopId}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('shopNameHeader').innerHTML = `☕ ${data.shop.name}`;
+                    
+                    if (data.shop.settings) {
+                        applySettings(data.shop.settings, data.shop.logo);
+                    } else if (data.shop.logo) {
+                        const logoEl = document.getElementById('shopLogo');
+                        logoEl.src = data.shop.logo + '?t=' + Date.now();
+                        logoEl.style.display = 'block';
+                    }
+                    
+                    if (data.shop.googleMapsUrl) {
+                        shopGoogleMapsUrl = data.shop.googleMapsUrl;
+                        document.getElementById('ratingLink').href = shopGoogleMapsUrl;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading shop info:', error);
+            }
+        }
+
+        function showRating() {
+            const ratingSection = document.querySelector('.rating-section');
+            if (ratingSection) {
+                ratingSection.style.display = 'block';
+                ratingSection.style.animation = 'fadeInUp 0.6s ease';
+            }
+        }
+
+        function closeRating() {
+            const ratingSection = document.querySelector('.rating-section');
+            if (ratingSection) ratingSection.style.display = 'none';
+            if (orderData && orderData.id) {
+                localStorage.setItem('rating_closed_' + orderData.id, 'true');
+            }
+        }
+
+        function showInAppNotification(title, message, type = 'info') {
+            const existing = document.querySelectorAll('.in-app-notification');
+            existing.forEach(el => el.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `in-app-notification ${type}`;
+            const icons = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' };
+            
+            notification.innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+                    <span style="font-size:28px;">${icons[type] || '📢'}</span>
+                    <div style="text-align:start;">
+                        <div class="notif-title">${title}</div>
+                        <div class="notif-body">${message}</div>
+                    </div>
+                </div>
+                <button class="notif-close" onclick="this.parentElement.remove()">✕</button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideUp 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 8000);
+        }
+
+        function updateStatus(status, message) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText2');
+            
+            dot.className = 'dot';
+            if (status === 'success') {
+                dot.classList.add('green');
+                text.textContent = '✅ ' + message;
+            } else if (status === 'error') {
+                dot.classList.add('red');
+                text.textContent = '❌ ' + message;
+            } else {
+                dot.classList.add('yellow');
+                text.textContent = '⏳ ' + message;
+            }
+        }
+
+        function playSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.frequency.value = 800;
+                osc1.type = 'square';
+                gain1.gain.value = 0.15;
+                osc1.start();
+                setTimeout(() => osc1.stop(), 400);
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.frequency.value = 1000;
+                    osc2.type = 'square';
+                    gain2.gain.value = 0.15;
+                    osc2.start();
+                    setTimeout(() => osc2.stop(), 300);
+                }, 300);
+                setTimeout(() => {
+                    const osc3 = audioCtx.createOscillator();
+                    const gain3 = audioCtx.createGain();
+                    osc3.connect(gain3);
+                    gain3.connect(audioCtx.destination);
+                    osc3.frequency.value = 1200;
+                    osc3.type = 'square';
+                    gain3.gain.value = 0.15;
+                    osc3.start();
+                    setTimeout(() => osc3.stop(), 400);
+                }, 600);
+            } catch (e) {}
+        }
+
+        function triggerVibration() {
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 400]);
+            }
+            const body = document.body;
+            body.style.transition = 'background 0.1s';
+            body.style.background = 'rgba(16, 185, 129, 0.1)';
+            setTimeout(() => { body.style.background = ''; }, 500);
+            setTimeout(() => { body.style.background = 'rgba(16, 185, 129, 0.1)'; }, 600);
+            setTimeout(() => { body.style.background = ''; }, 700);
+        }
+
+        function playNotificationWithAlert() {
+            playSound();
+            triggerVibration();
+            if (orderData && orderData.status === 'ready') {
+                showInAppNotification(
+                    window.t('customer_ready_notification'),
+                    `${window.t('customer_order_number')} ${orderData.number}`,
+                    'success'
+                );
+            }
+        }
+
+        async function setupPushNotifications() {
+            try {
+                if (!('serviceWorker' in navigator)) return;
+                await navigator.serviceWorker.register('/service-worker.js');
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    updateStatus('success', window.t('status_notifications_enabled'));
+                }
+            } catch (error) {
+                console.error('❌ Setup error:', error);
+            }
+        }
+
+        function initSocket() {
+            socket = io({
+                withCredentials: true,
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 1000
+            });
+            
+            socket.on('connect', () => {
+                updateStatus('success', 'Connected');
+                if (orderId) socket.emit('join-order', orderId);
+                if (shopId) socket.emit('join-shop', shopId);
+            });
+            
+            socket.on('order-status', (order) => {
+                const oldStatus = orderData ? orderData.status : null;
+                orderData = order;
+                updateUI(order);
+                
+                if (oldStatus && oldStatus !== order.status) {
+                    const statusMessages = {
+                        'waiting': window.t('customer_status_waiting_msg'),
+                        'preparing': window.t('customer_status_preparing_msg'),
+                        'ready': window.t('customer_status_ready_msg'),
+                        'completed': window.t('customer_status_completed_msg')
+                    };
+                    const titles = {
+                        'waiting': window.t('customer_status_waiting'),
+                        'preparing': window.t('customer_status_preparing'),
+                        'ready': window.t('customer_ready_notification'),
+                        'completed': window.t('customer_status_completed')
+                    };
+                    
+                    if (order.status !== 'completed') {
+                        showInAppNotification(
+                            titles[order.status] || 'Update',
+                            statusMessages[order.status] || '',
+                            order.status === 'ready' ? 'success' : 'info'
+                        );
+                    }
+                }
+                
+                if (order.status === 'ready' && !notificationPlayed) {
+                    playNotificationWithAlert();
+                    notificationPlayed = true;
+                }
+            });
+            
+            socket.on('settings-updated', (settings) => {
+                if (settings) applySettings(settings, null);
+            });
+            
+            socket.on('logo-updated', (data) => {
+                if (data.logoUrl) {
+                    const logoEl = document.getElementById('shopLogo');
+                    logoEl.src = data.logoUrl + '?t=' + Date.now();
+                    logoEl.style.display = 'block';
+                }
+            });
+            
+            socket.on('disconnect', () => {
+                updateStatus('error', window.t('status_disconnected'));
+            });
+            
+            socket.on('reconnect', () => {
+                updateStatus('success', 'Connected');
+                if (orderId) socket.emit('join-order', orderId);
+            });
+        }
+
+        function updateUI(order) {
+            document.getElementById('loadingScreen').style.display = 'none';
+            
+            if (order.status === 'completed') {
+                document.getElementById('customerScreen').style.display = 'none';
+                document.getElementById('completedScreen').style.display = 'flex';
+                
+                const ratingClosed = localStorage.getItem('rating_closed_' + order.id);
+                if (!ratingClosed) setTimeout(showRating, 800);
+                return;
+            }
+            
+            document.getElementById('customerScreen').style.display = 'flex';
+            document.getElementById('completedScreen').style.display = 'none';
+            
+            document.getElementById('orderNumber').textContent = order.number;
+            document.getElementById('orderDetails').textContent = order.orderDetails;
+            
+            const date = new Date(order.timestamp);
+            document.getElementById('orderTime').textContent = date.toLocaleTimeString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            if (order.qrCode) {
+                document.getElementById('qrCodeImage').src = order.qrCode;
+            }
+            
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            statusBadge.className = 'status-badge';
+            let msg = '';
+            
+            switch(order.status) {
+                case 'waiting':
+                    statusBadge.classList.add('waiting');
+                    statusText.textContent = window.t('customer_status_waiting');
+                    msg = window.t('customer_status_waiting_msg');
+                    break;
+                case 'preparing':
+                    statusBadge.classList.add('preparing');
+                    statusText.textContent = window.t('customer_status_preparing');
+                    msg = window.t('customer_status_preparing_msg');
+                    break;
+                case 'ready':
+                    statusBadge.classList.add('ready');
+                    statusText.textContent = window.t('customer_status_ready');
+                    msg = window.t('customer_status_ready_msg');
+                    break;
+                case 'completed':
+                    statusBadge.classList.add('completed');
+                    statusText.textContent = window.t('customer_status_completed');
+                    msg = window.t('customer_status_completed_msg');
+                    break;
+            }
+            
+            statusMessage.textContent = msg;
+            
+            const indicator = document.getElementById('notificationIndicator');
+            if (order.status === 'ready') {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+                notificationPlayed = false;
+            }
+        }
+
+        function resetSession() {
+            window.location.href = '/';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadShopInfo();
+            
+            if (orderId) {
+                localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
+                setTimeout(() => setupPushNotifications(), 1000);
+                initSocket();
+                updateStatus('success', 'Ready');
+            } else {
+                const savedOrder = localStorage.getItem('currentOrder');
+                if (savedOrder) {
+                    const savedOrderId = JSON.parse(savedOrder).id;
+                    if (savedOrderId) {
+                        window.location.href = `/?order=${savedOrderId}&shop=${shopId || ''}`;
+                        return;
+                    }
+                }
+                
+                document.getElementById('loadingScreen').innerHTML = `
+                    <div style="padding:32px; text-align:center;">
+                        <div style="font-size:64px; margin-bottom:16px;">☕</div>
+                        <h2 style="font-size:24px; font-weight:700; color:var(--text-color); margin-bottom:8px;" data-i18n="customer_welcome">${window.t('customer_welcome')}</h2>
+                        <p style="color:#94a3b8;" data-i18n="customer_no_order">${window.t('customer_no_order')}</p>
+                        <p style="color:#94a3b8; font-size:14px; margin-top:8px;" data-i18n="customer_scan_qr">${window.t('customer_scan_qr')}</p>
+                    </div>
+                `;
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (orderId) {
+                localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
+            }
+        });
+    </script>
+</body>
+</html>

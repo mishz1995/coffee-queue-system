@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Order Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/i18n.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto p-4 max-w-6xl">
+        <!-- الهيدر -->
+        <div class="dashboard-header" id="dashboardHeader">
+            <div style="display:flex; align-items:center; gap:16px;">
+                <img id="shopLogo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E☕%3C/text%3E%3C/svg%3E" alt="Logo" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid white; display:none;">
+                <div>
+                    <h1 data-i18n="dashboard_title">☕ لوحة البارستا</h1>
+                    <div class="subtitle" id="shopNameDisplay">...</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                <button onclick="openNewOrderModal()" class="btn" style="background:white; color:var(--primary-color); padding:10px 20px; border:none; border-radius:8px; font-weight:700; cursor:pointer;" data-i18n="dashboard_new_order">
+                    ➕ طلب جديد
+                </button>
+                <button onclick="openBannerModal()" class="btn" style="background:rgba(255,255,255,0.2); color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,0.3);" data-i18n="dashboard_banner">
+                    🖼️ البانر
+                </button>
+                <button onclick="location.href='/settings.html'" class="btn" style="background:rgba(255,255,255,0.2); color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,0.3);" data-i18n="dashboard_settings">
+                    ⚙️ الإعدادات
+                </button>
+                <button onclick="logout()" class="btn" style="background:#ef4444; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer;" data-i18n="dashboard_logout">
+                    🚪 خروج
+                </button>
+            </div>
+        </div>
+        
+        <!-- الإحصائيات -->
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="number" id="totalOrders">0</div>
+                <div class="label" data-i18n="dashboard_total_orders">إجمالي الطلبات</div>
+            </div>
+            <div class="stat-card">
+                <div class="number yellow" id="waitingOrders">0</div>
+                <div class="label" data-i18n="dashboard_waiting">في الانتظار</div>
+            </div>
+            <div class="stat-card">
+                <div class="number orange" id="preparingOrders">0</div>
+                <div class="label" data-i18n="dashboard_preparing">قيد التحضير</div>
+            </div>
+            <div class="stat-card">
+                <div class="number green" id="readyOrders">0</div>
+                <div class="label" data-i18n="dashboard_ready">جاهز للاستلام</div>
+            </div>
+        </div>
+        
+        <!-- قائمة الطلبات -->
+        <div style="background:var(--card-color); border-radius:var(--border-radius); box-shadow:0 2px 8px rgba(0,0,0,0.05); padding:16px;">
+            <h2 style="font-size:18px; font-weight:700; color:var(--text-color); margin-bottom:16px;" data-i18n="dashboard_active_orders">📋 الطلبات النشطة</h2>
+            <div id="ordersList" style="display:flex; flex-direction:column; gap:8px;">
+                <div style="text-align:center; color:#94a3b8; padding:32px;" data-i18n="dashboard_no_orders">🎉 لا توجد طلبات نشطة حالياً</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال طلب جديد -->
+    <div id="newOrderModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 data-i18n="new_order_title">📝 طلب جديد</h2>
+            <form id="newOrderForm" onsubmit="createNewOrder(event)">
+                <div class="form-group">
+                    <label data-i18n="new_order_customer">اسم العميل</label>
+                    <input type="text" id="customerNameInput" data-i18n-placeholder="new_order_customer_placeholder" placeholder="أدخل اسم العميل">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="new_order_details">تفاصيل الطلب</label>
+                    <input type="text" id="orderDetailsInput" data-i18n-placeholder="new_order_details_placeholder" placeholder="مثال: كابتشينو، كرواسان">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit" data-i18n="new_order_submit">إنشاء الطلب</button>
+                    <button type="button" class="btn-cancel" onclick="closeNewOrderModal()" data-i18n="cancel">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- مودال عرض QR -->
+    <div id="qrModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 data-i18n="qr_title">📱 رمز QR للطلب</h2>
+            <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;" data-i18n="qr_subtitle">اطبع أو اعرض هذا الرمز للعميل لمسحه</p>
+            <div class="qr-preview">
+                <img id="qrModalImage" src="" alt="QR Code">
+                <div class="qr-label" id="qrModalOrderNumber">#0000</div>
+            </div>
+            <div class="form-actions" style="margin-top:16px;">
+                <button onclick="closeQRModal()" class="btn-cancel" data-i18n="close">إغلاق</button>
+                <button onclick="printQR()" class="btn-submit" data-i18n="qr_print">🖨️ طباعة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال رفع البانر -->
+    <div id="bannerModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 data-i18n="dashboard_banner">🖼️ تغيير صورة البانر</h2>
+            <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">اختر صورة لعرضها في شاشة QR</p>
+            <form id="bannerForm" onsubmit="uploadBanner(event)">
+                <div class="form-group">
+                    <label>اختر صورة (JPG أو PNG)</label>
+                    <input type="file" id="bannerFileInput" accept="image/*" required style="width:100%;padding:8px;border:2px solid #e2e8f0;border-radius:8px;">
+                </div>
+                <div id="bannerPreview" style="margin:12px 0;text-align:center;display:none;">
+                    <img id="bannerPreviewImage" src="" alt="معاينة" style="max-width:100%;max-height:200px;border-radius:12px;border:2px solid #e2e8f0;">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">📤 رفع الصورة</button>
+                    <button type="button" class="btn-cancel" onclick="closeBannerModal()" data-i18n="cancel">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let orders = [];
+        let currentQRData = null;
+        let currentOrderId = null;
+        let shopId = null;
+
+        // ====== تطبيق الإعدادات ======
+        function applySettings(settings, logo) {
+            const root = document.documentElement;
+            
+            if (settings.primaryColor) root.style.setProperty('--primary-color', settings.primaryColor);
+            if (settings.secondaryColor) root.style.setProperty('--secondary-color', settings.secondaryColor);
+            if (settings.backgroundColor) root.style.setProperty('--bg-color', settings.backgroundColor);
+            if (settings.textColor) root.style.setProperty('--text-color', settings.textColor);
+            if (settings.cardColor) root.style.setProperty('--card-color', settings.cardColor);
+            if (settings.buttonColor) root.style.setProperty('--button-color', settings.buttonColor);
+            if (settings.headerColor) root.style.setProperty('--header-color', settings.headerColor);
+            if (settings.borderRadius) root.style.setProperty('--border-radius', settings.borderRadius);
+            if (settings.fontFamily) root.style.setProperty('--font-family', settings.fontFamily);
+            
+            if (settings.darkMode) {
+                document.body.classList.add('dark-mode');
+                if (settings.darkBackground) root.style.setProperty('--bg-color', settings.darkBackground);
+                if (settings.darkText) root.style.setProperty('--text-color', settings.darkText);
+                if (settings.darkCard) root.style.setProperty('--card-color', settings.darkCard);
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            if (logo) {
+                const logoEl = document.getElementById('shopLogo');
+                logoEl.src = logo + '?t=' + Date.now();
+                logoEl.style.display = 'block';
+            }
+        }
+
+        // ====== التحقق من المصادقة ======
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-shop');
+                const data = await response.json();
+                if (data.success) {
+                    shopId = data.shop.id;
+                    document.getElementById('shopNameDisplay').textContent = `🏪 ${data.shop.name}`;
+                    
+                    if (data.shop.settings) {
+                        applySettings(data.shop.settings, data.shop.logo);
+                    }
+                    
+                    return true;
+                } else {
+                    window.location.href = '/login.html';
+                    return false;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = '/login.html';
+                return false;
+            }
+        }
+
+        // ====== تسجيل الخروج ======
+        async function logout() {
+            if (!confirm(window.t('alert_logout_confirm'))) return;
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        // ====== Socket.io ======
+        function initSocket() {
+            socket = io({ withCredentials: true });
+            
+            socket.on('connect', () => {
+                console.log('✅ Dashboard connected');
+                if (shopId) {
+                    socket.emit('join-shop', shopId);
+                    socket.emit('get-active-orders', shopId);
+                }
+            });
+            
+            socket.on('orders-update', (updatedOrders) => {
+                orders = updatedOrders;
+                renderOrders(orders);
+                updateStats(orders);
+            });
+            
+            socket.on('settings-updated', (settings) => {
+                if (settings) applySettings(settings, null);
+            });
+            
+            socket.on('logo-updated', (data) => {
+                if (data.logoUrl) {
+                    const logoEl = document.getElementById('shopLogo');
+                    logoEl.src = data.logoUrl + '?t=' + Date.now();
+                    logoEl.style.display = 'block';
+                }
+            });
+            
+            socket.on('error', (data) => {
+                console.error('❌ Socket error:', data);
+            });
+        }
+
+        // ====== عرض الطلبات ======
+        function renderOrders(ordersList) {
+            const container = document.getElementById('ordersList');
+            if (!ordersList || ordersList.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:32px;">${window.t('dashboard_no_orders')}</div>`;
+                return;
+            }
+            const sorted = [...ordersList].sort((a, b) => a.number - b.number);
+            container.innerHTML = sorted.map(order => `
+                <div class="order-card status-${order.status}">
+                    <div class="order-info">
+                        <div class="order-number-big">#${order.number}</div>
+                        <div>
+                            <div class="order-name">${order.customerName}</div>
+                            <div class="order-details-text">${order.orderDetails}</div>
+                            <div class="order-time-text">${new Date(order.timestamp).toLocaleTimeString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                    </div>
+                    <div class="order-actions">${getStatusButtons(order)}</div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusButtons(order) {
+            const status = order.status;
+            let buttons = '';
+            if (status === 'waiting') {
+                buttons += `<button onclick="updateOrder('${order.id}', 'preparing')" class="btn btn-prepare">🧑‍🍳 ${window.t('status_preparing')}</button>`;
+            }
+            if (status === 'preparing') {
+                buttons += `<button onclick="updateOrder('${order.id}', 'ready')" class="btn btn-ready">✅ ${window.t('status_ready')}</button>`;
+            }
+            if (status === 'ready') {
+                buttons += `<button onclick="updateOrder('${order.id}', 'completed')" class="btn btn-complete">📦 ${window.t('status_completed')}</button>`;
+            }
+            if (status !== 'completed') {
+                buttons += `<button onclick="showQR('${order.id}')" class="btn btn-qr">📱 QR</button>`;
+            }
+            return buttons;
+        }
+
+        function updateStats(ordersList) {
+            const total = ordersList.length;
+            const waiting = ordersList.filter(o => o.status === 'waiting').length;
+            const preparing = ordersList.filter(o => o.status === 'preparing').length;
+            const ready = ordersList.filter(o => o.status === 'ready').length;
+            document.getElementById('totalOrders').textContent = total;
+            document.getElementById('waitingOrders').textContent = waiting;
+            document.getElementById('preparingOrders').textContent = preparing;
+            document.getElementById('readyOrders').textContent = ready;
+        }
+
+        function updateOrder(orderId, newStatus) {
+            if (!socket) return;
+            socket.emit('update-order-status', { orderId, newStatus }, (response) => {
+                if (response && !response.success) {
+                    alert('❌ ' + response.error);
+                }
+            });
+        }
+
+        function createNewOrder(event) {
+            event.preventDefault();
+            const customerName = document.getElementById('customerNameInput').value.trim() || 'Customer';
+            const orderDetails = document.getElementById('orderDetailsInput').value.trim() || 'Coffee Order';
+            
+            fetch('/api/generate-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customerName, orderDetails })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeNewOrderModal();
+                    currentOrderId = data.order.id;
+                    showQR(data.order.id);
+                    if (socket) socket.emit('get-active-orders', shopId);
+                    document.getElementById('customerNameInput').value = '';
+                    document.getElementById('orderDetailsInput').value = '';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating order:', error);
+                alert(window.t('add_shop_error'));
+            });
+        }
+
+        function showQR(orderId) {
+            fetch(`/api/order/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.order) {
+                        currentQRData = data.order;
+                        currentOrderId = orderId;
+                        document.getElementById('qrModalImage').src = data.order.qrCode;
+                        document.getElementById('qrModalOrderNumber').textContent = `#${data.order.number} - ${data.order.customerName}`;
+                        document.getElementById('qrModal').style.display = 'flex';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching order:', error);
+                });
+        }
+
+        function printQR() {
+            const printWindow = window.open('', '_blank');
+            const qrImage = document.getElementById('qrModalImage').src;
+            const orderNumber = document.getElementById('qrModalOrderNumber').textContent;
+            const shopName = document.getElementById('shopNameDisplay').textContent.replace('🏪 ', '');
+            printWindow.document.write(`
+                <html><head><title>QR Code - ${orderNumber}</title></head>
+                <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:white;">
+                    <div style="text-align:center;padding:20px;border:2px dashed #e5e7eb;border-radius:12px;">
+                        <h2 style="margin-bottom:10px;color:#374151;">☕ ${shopName}</h2>
+                        <p style="color:#6b7280;margin-bottom:20px;">${orderNumber}</p>
+                        <img src="${qrImage}" style="max-width:250px;height:auto;margin:0 auto;">
+                        <p style="color:#9ca3af;font-size:12px;margin-top:20px;">${window.t('qr_scan')}</p>
+                    </div>
+                </body></html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function openNewOrderModal() {
+            document.getElementById('newOrderModal').style.display = 'flex';
+            document.getElementById('customerNameInput').focus();
+        }
+        function closeNewOrderModal() {
+            document.getElementById('newOrderModal').style.display = 'none';
+        }
+        function closeQRModal() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+
+        function openBannerModal() {
+            document.getElementById('bannerModal').style.display = 'flex';
+            document.getElementById('bannerFileInput').value = '';
+            document.getElementById('bannerPreview').style.display = 'none';
+        }
+        function closeBannerModal() {
+            document.getElementById('bannerModal').style.display = 'none';
+        }
+
+        document.getElementById('bannerFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('bannerPreviewImage').src = event.target.result;
+                    document.getElementById('bannerPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function uploadBanner(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('bannerFileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please choose an image');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('bannerImage', file);
+            
+            fetch('/api/upload-banner', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(window.t('alert_banner_uploaded'));
+                    closeBannerModal();
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading banner:', error);
+                alert(window.t('alert_upload_error'));
+            });
+        }
+
+        document.getElementById('newOrderModal').addEventListener('click', function(e) {
+            if (e.target === this) closeNewOrderModal();
+        });
+        document.getElementById('qrModal').addEventListener('click', function(e) {
+            if (e.target === this) closeQRModal();
+        });
+        document.getElementById('bannerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeBannerModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const authenticated = await checkAuth();
+            if (authenticated) {
+                initSocket();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Order Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <script src="/i18n.js"></script>
+</head>
+<body style="min-height:100vh; padding:20px;">
+
+    <div class="settings-container">
+        
+        <!-- ====== الهيدر ====== -->
+        <div class="header" style="background:var(--header-color); border-radius:16px; padding:24px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h1 style="font-size:24px; font-weight:800; color:white;" data-i18n="settings_title">⚙️ إعدادات المقهى</h1>
+                <div id="shopNameDisplay" style="font-size:14px; color:rgba(255,255,255,0.85);">...</div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <button onclick="saveAllSettings()" class="btn" style="background:white; color:var(--primary-color); padding:10px 20px; border:none; border-radius:8px; font-weight:700; cursor:pointer;" data-i18n="settings_save_all">
+                    💾 حفظ جميع التغييرات
+                </button>
+                <button onclick="openPreview()" class="btn" style="background:rgba(255,255,255,0.2); color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,0.3);" data-i18n="settings_preview">
+                    👁️ معاينة كاملة
+                </button>
+                <button onclick="goBack()" class="btn" style="background:rgba(255,255,255,0.2); color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,0.3);" data-i18n="back">
+                    🔙 العودة
+                </button>
+            </div>
+        </div>
+
+        <!-- ====== القسم 1: الهوية ====== -->
+        <div class="settings-card">
+            <h3 data-i18n="settings_identity">🖼️ القسم 1: الهوية</h3>
+            
+            <div class="form-group">
+                <label data-i18n="settings_logo">شعار المقهى (Logo)</label>
+                <div style="text-align:center;">
+                    <img id="logoPreview" class="logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E☕%3C/text%3E%3C/svg%3E" alt="الشعار">
+                    <input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="uploadLogo(event)">
+                    <button onclick="document.getElementById('logoInput').click()" class="btn btn-primary" style="margin-top:12px;" data-i18n="settings_logo_choose">
+                        📤 اختر شعار جديد
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_banner">بانر المقهى</label>
+                <div>
+                    <img id="bannerPreview" class="banner-preview" src="" alt="البانر" style="display:none;">
+                    <div id="bannerPlaceholder" style="text-align:center; padding:40px; background:var(--bg-color); border-radius:12px; border:2px dashed #e2e8f0; color:#94a3b8;" data-i18n="settings_banner_none">
+                        لا يوجد بانر
+                    </div>
+                    <input type="file" id="bannerInput" accept="image/*" style="display:none;" onchange="uploadBanner(event)">
+                    <button onclick="document.getElementById('bannerInput').click()" class="btn btn-primary" style="margin-top:12px;" data-i18n="settings_banner_choose">
+                        📤 اختر بانر جديد
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_shop_name">اسم المقهى</label>
+                <input type="text" id="shopName" placeholder="Coffee Shop">
+            </div>
+            <div class="form-group">
+                <label data-i18n="settings_shop_phone">رقم الهاتف</label>
+                <input type="tel" id="shopPhone" placeholder="0501234567">
+            </div>
+            <div class="form-group">
+                <label data-i18n="settings_shop_address">العنوان</label>
+                <input type="text" id="shopAddress" placeholder="Riyadh">
+            </div>
+            <div class="form-group">
+                <label data-i18n="settings_shop_hours">ساعات العمل</label>
+                <input type="text" id="shopWorkingHours" placeholder="6 AM - 12 PM">
+            </div>
+            <div class="form-group">
+                <label data-i18n="settings_google_maps">رابط تقييم Google Maps</label>
+                <input type="url" id="googleMapsUrl" placeholder="https://g.page/.../review">
+            </div>
+        </div>
+
+        <!-- ====== القسم 2: الألوان ====== -->
+        <div class="settings-card">
+            <h3 data-i18n="settings_colors">🎨 القسم 2: الألوان (الوضع النهاري)</h3>
+            
+            <div class="form-group">
+                <label data-i18n="settings_primary_color">اللون الأساسي (Primary)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="primaryColor" value="#F59E0B" oninput="updatePreview()">
+                    <input type="text" id="primaryColorText" value="#F59E0B" oninput="syncColor('primaryColor')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_secondary_color">اللون الثانوي (Secondary)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="secondaryColor" value="#667EEA" oninput="updatePreview()">
+                    <input type="text" id="secondaryColorText" value="#667EEA" oninput="syncColor('secondaryColor')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_bg_color">لون الخلفية (Background)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="backgroundColor" value="#f8fafc" oninput="updatePreview()">
+                    <input type="text" id="backgroundColorText" value="#f8fafc" oninput="syncColor('backgroundColor')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_text_color">لون النص (Text)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="textColor" value="#1e293b" oninput="updatePreview()">
+                    <input type="text" id="textColorText" value="#1e293b" oninput="syncColor('textColor')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_card_color">لون البطاقات (Cards)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="cardColor" value="#ffffff" oninput="updatePreview()">
+                    <input type="text" id="cardColorText" value="#ffffff" oninput="syncColor('cardColor')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_button_color">لون الأزرار (Buttons)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="buttonColor" value="#667EEA" oninput="updatePreview()">
+                    <input type="text" id="buttonColorText" value="#667EEA" oninput="syncColor('buttonColor')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_header_color">لون الهيدر (Header)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="headerColor" value="#1e293b" oninput="updatePreview()">
+                    <input type="text" id="headerColorText" value="#1e293b" oninput="syncColor('headerColor')">
+                </div>
+            </div>
+
+            <button onclick="resetColors()" class="btn btn-secondary" style="width:100%; padding:12px; border:none; border-radius:8px; font-weight:600; cursor:pointer;" data-i18n="settings_reset_colors">
+                🔄 إعادة الألوان الافتراضية
+            </button>
+        </div>
+
+        <!-- ====== القسم 3: الوضع الليلي ====== -->
+        <div class="settings-card">
+            <h3 data-i18n="settings_dark_mode">🌙 القسم 3: الوضع الليلي</h3>
+            
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; padding:16px; background:var(--bg-color); border-radius:12px;">
+                <div>
+                    <div style="font-weight:700; color:var(--text-color);" data-i18n="settings_dark_enable">تفعيل الوضع الليلي</div>
+                    <div style="font-size:13px; color:#94a3b8;" data-i18n="settings_dark_enable_desc">سيتم تطبيق الألوان الليلية على جميع الصفحات</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkModeToggle" onchange="updatePreview()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_dark_bg">خلفية الوضع الليلي</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="darkBackground" value="#0f172a" oninput="updatePreview()">
+                    <input type="text" id="darkBackgroundText" value="#0f172a" oninput="syncColor('darkBackground')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_dark_text">نص الوضع الليلي</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="darkText" value="#f1f5f9" oninput="updatePreview()">
+                    <input type="text" id="darkTextText" value="#f1f5f9" oninput="syncColor('darkText')">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_dark_card">بطاقات الوضع الليلي</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="darkCard" value="#1e293b" oninput="updatePreview()">
+                    <input type="text" id="darkCardText" value="#1e293b" oninput="syncColor('darkCard')">
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== القسم 4: المظهر ====== -->
+        <div class="settings-card">
+            <h3 data-i18n="settings_appearance">✨ القسم 4: المظهر</h3>
+            
+            <div class="form-group">
+                <label data-i18n="settings_font">نوع الخط</label>
+                <select id="fontFamily" onchange="updatePreview()">
+                    <option value="Inter">Inter</option>
+                    <option value="Cairo">Cairo</option>
+                    <option value="Tajawal">Tajawal</option>
+                    <option value="Amiri">Amiri</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="settings_border_radius">نصف قطر الزوايا</label>
+                <select id="borderRadius" onchange="updatePreview()">
+                    <option value="0px" data-i18n="settings_radius_square">مربع (0px)</option>
+                    <option value="8px" data-i18n="settings_radius_small">صغير (8px)</option>
+                    <option value="12px" data-i18n="settings_radius_medium">متوسط (12px)</option>
+                    <option value="16px" data-i18n="settings_radius_large">كبير (16px)</option>
+                    <option value="24px" data-i18n="settings_radius_round">دائري (24px)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ====== القسم 5: المعاينة ====== -->
+        <div class="settings-card">
+            <h3 data-i18n="settings_live_preview">👁️ القسم 5: المعاينة المباشرة</h3>
+            
+            <div id="previewBox" style="padding:24px; background:var(--bg-color); border-radius:var(--border-radius); border:2px solid #e2e8f0;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                    <img id="previewLogo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E☕%3C/text%3E%3C/svg%3E" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
+                    <div>
+                        <div id="previewShopName" style="font-weight:800; color:var(--text-color);">Coffee Shop</div>
+                        <div style="font-size:12px; color:#94a3b8;" data-i18n="settings_live_preview_subtitle">معاينة حية</div>
+                    </div>
+                </div>
+                
+                <div style="background:var(--card-color); padding:16px; border-radius:var(--border-radius); margin-bottom:12px;">
+                    <div style="font-weight:700; color:var(--text-color); margin-bottom:8px;" data-i18n="settings_preview_order">طلب رقم #1001</div>
+                    <div style="font-size:14px; color:#64748b;" data-i18n="settings_preview_order_details">كابتشينو + كرواسان</div>
+                </div>
+                
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button style="background:var(--button-color); color:white; padding:8px 16px; border:none; border-radius:8px; font-weight:600; cursor:pointer;" data-i18n="settings_preview_button_primary">
+                        زر رئيسي
+                    </button>
+                    <button style="background:var(--primary-color); color:white; padding:8px 16px; border:none; border-radius:8px; font-weight:600; cursor:pointer;" data-i18n="settings_preview_button_secondary">
+                        زر ثانوي
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== أزرار الإجراءات ====== -->
+        <div class="settings-card" style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+            <button onclick="saveAllSettings()" class="btn" style="background:var(--button-color); color:white; padding:14px 32px; border:none; border-radius:12px; font-weight:700; cursor:pointer; font-size:16px;" data-i18n="settings_save_all">
+                💾 حفظ جميع التغييرات
+            </button>
+            <button onclick="openPreview()" class="btn btn-secondary" style="padding:14px 32px; border:none; border-radius:12px; font-weight:700; cursor:pointer; font-size:16px;" data-i18n="settings_preview">
+                👁️ معاينة كاملة
+            </button>
+            <button onclick="logout()" class="btn btn-danger" style="padding:14px 32px; border:none; border-radius:12px; font-weight:700; cursor:pointer; font-size:16px;" data-i18n="logout">
+                🚪 خروج
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        let shopId = null;
+        let isAdmin = false;
+        let editingOtherShop = false; // ← هل المدير يعدل مقهى آخر؟
+
+        async function init() {
+            try {
+                const response = await fetch('/api/current-shop');
+                const data = await response.json();
+                if (!data.success) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                isAdmin = data.shop.isAdmin || false;
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetShopId = urlParams.get('shop');
+                
+                let shopData;
+                let settingsData;
+                
+                // هل المدير يعدل مقهى آخر؟
+                if (isAdmin && targetShopId && targetShopId !== data.shop.id) {
+                    editingOtherShop = true;
+                    shopId = targetShopId;
+                    
+                    const adminRes = await fetch(`/api/admin/shop/${targetShopId}/settings`);
+                    const adminData = await adminRes.json();
+                    
+                    if (!adminData.success) {
+                        alert('Shop not found');
+                        window.location.href = '/admin.html';
+                        return;
+                    }
+                    
+                    shopData = adminData.shop;
+                    settingsData = {
+                        success: true,
+                        settings: shopData.settings || {},
+                        googleMapsUrl: shopData.googleMapsUrl || '',
+                        phone: shopData.phone || '',
+                        address: shopData.address || '',
+                        workingHours: shopData.workingHours || ''
+                    };
+                } else {
+                    shopId = data.shop.id;
+                    shopData = data.shop;
+                    const settingsRes = await fetch('/api/shop/settings');
+                    settingsData = await settingsRes.json();
+                }
+                
+                document.getElementById('shopNameDisplay').textContent = `🏪 ${shopData.name}`;
+                
+                if (settingsData.success) {
+                    loadSettings(shopData, settingsData);
+                    applyLiveSettings(settingsData.settings);
+                }
+            } catch (error) {
+                console.error('Init error:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        function goBack() {
+            if (isAdmin) {
+                window.location.href = '/admin.html';
+            } else {
+                window.location.href = '/dashboard.html';
+            }
+        }
+
+        function loadSettings(shop, settingsData) {
+            if (shop.logo) {
+                document.getElementById('logoPreview').src = shop.logo + '?t=' + Date.now();
+                document.getElementById('previewLogo').src = shop.logo + '?t=' + Date.now();
+            }
+            
+            if (shop.bannerImage) {
+                const bannerPreview = document.getElementById('bannerPreview');
+                bannerPreview.src = shop.bannerImage + '?t=' + Date.now();
+                bannerPreview.style.display = 'block';
+                document.getElementById('bannerPlaceholder').style.display = 'none';
+            }
+            
+            document.getElementById('shopName').value = shop.name || '';
+            document.getElementById('shopPhone').value = settingsData.phone || '';
+            document.getElementById('shopAddress').value = settingsData.address || '';
+            document.getElementById('shopWorkingHours').value = settingsData.workingHours || '';
+            document.getElementById('googleMapsUrl').value = settingsData.googleMapsUrl || '';
+            document.getElementById('previewShopName').textContent = shop.name || 'Coffee Shop';
+            
+            const s = settingsData.settings || {};
+            setColor('primaryColor', s.primaryColor || '#F59E0B');
+            setColor('secondaryColor', s.secondaryColor || '#667EEA');
+            setColor('backgroundColor', s.backgroundColor || '#f8fafc');
+            setColor('textColor', s.textColor || '#1e293b');
+            setColor('cardColor', s.cardColor || '#ffffff');
+            setColor('buttonColor', s.buttonColor || '#667EEA');
+            setColor('headerColor', s.headerColor || '#1e293b');
+            setColor('darkBackground', s.darkBackground || '#0f172a');
+            setColor('darkText', s.darkText || '#f1f5f9');
+            setColor('darkCard', s.darkCard || '#1e293b');
+            
+            document.getElementById('darkModeToggle').checked = s.darkMode || false;
+            document.getElementById('fontFamily').value = s.fontFamily || 'Inter';
+            document.getElementById('borderRadius').value = s.borderRadius || '16px';
+        }
+
+        function setColor(id, value) {
+            document.getElementById(id).value = value;
+            document.getElementById(id + 'Text').value = value;
+        }
+
+        function syncColor(id) {
+            const textValue = document.getElementById(id + 'Text').value;
+            if (/^#[0-9A-Fa-f]{6}$/.test(textValue)) {
+                document.getElementById(id).value = textValue;
+                updatePreview();
+            }
+        }
+
+        function updatePreview() {
+            const settings = getCurrentSettings();
+            applyLiveSettings(settings);
+        }
+
+        function applyLiveSettings(settings) {
+            const root = document.documentElement;
+            
+            root.style.setProperty('--primary-color', settings.primaryColor);
+            root.style.setProperty('--secondary-color', settings.secondaryColor);
+            root.style.setProperty('--bg-color', settings.backgroundColor);
+            root.style.setProperty('--text-color', settings.textColor);
+            root.style.setProperty('--card-color', settings.cardColor);
+            root.style.setProperty('--button-color', settings.buttonColor);
+            root.style.setProperty('--header-color', settings.headerColor);
+            root.style.setProperty('--border-radius', settings.borderRadius);
+            root.style.setProperty('--font-family', settings.fontFamily);
+            
+            if (settings.darkMode) {
+                document.body.classList.add('dark-mode');
+                root.style.setProperty('--bg-color', settings.darkBackground);
+                root.style.setProperty('--text-color', settings.darkText);
+                root.style.setProperty('--card-color', settings.darkCard);
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            document.getElementById('previewShopName').textContent = 
+                document.getElementById('shopName').value || 'Coffee Shop';
+        }
+
+        function getCurrentSettings() {
+            return {
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                backgroundColor: document.getElementById('backgroundColor').value,
+                textColor: document.getElementById('textColor').value,
+                cardColor: document.getElementById('cardColor').value,
+                buttonColor: document.getElementById('buttonColor').value,
+                headerColor: document.getElementById('headerColor').value,
+                darkMode: document.getElementById('darkModeToggle').checked,
+                darkBackground: document.getElementById('darkBackground').value,
+                darkText: document.getElementById('darkText').value,
+                darkCard: document.getElementById('darkCard').value,
+                fontFamily: document.getElementById('fontFamily').value,
+                borderRadius: document.getElementById('borderRadius').value
+            };
+        }
+
+        async function uploadLogo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('logo', file);
+            formData.append('shopId', shopId);
+            
+            try {
+                const response = await fetch('/api/upload-logo', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('logoPreview').src = data.logoUrl + '?t=' + Date.now();
+                    document.getElementById('previewLogo').src = data.logoUrl + '?t=' + Date.now();
+                    alert(window.t('alert_logo_uploaded'));
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert(window.t('alert_upload_error'));
+            }
+        }
+
+        async function uploadBanner(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('bannerImage', file);
+            formData.append('shopId', shopId);
+            
+            try {
+                const response = await fetch('/api/upload-banner', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const bannerPreview = document.getElementById('bannerPreview');
+                    bannerPreview.src = data.imageUrl + '?t=' + Date.now();
+                    bannerPreview.style.display = 'block';
+                    document.getElementById('bannerPlaceholder').style.display = 'none';
+                    alert(window.t('alert_banner_uploaded'));
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert(window.t('alert_upload_error'));
+            }
+        }
+
+        function resetColors() {
+            if (!confirm(window.t('alert_reset_colors'))) return;
+            
+            setColor('primaryColor', '#F59E0B');
+            setColor('secondaryColor', '#667EEA');
+            setColor('backgroundColor', '#f8fafc');
+            setColor('textColor', '#1e293b');
+            setColor('cardColor', '#ffffff');
+            setColor('buttonColor', '#667EEA');
+            setColor('headerColor', '#1e293b');
+            setColor('darkBackground', '#0f172a');
+            setColor('darkText', '#f1f5f9');
+            setColor('darkCard', '#1e293b');
+            document.getElementById('fontFamily').value = 'Inter';
+            document.getElementById('borderRadius').value = '16px';
+            
+            updatePreview();
+        }
+
+        async function saveAllSettings() {
+            const settings = getCurrentSettings();
+            const shopData = {
+                phone: document.getElementById('shopPhone').value,
+                address: document.getElementById('shopAddress').value,
+                workingHours: document.getElementById('shopWorkingHours').value,
+                googleMapsUrl: document.getElementById('googleMapsUrl').value,
+                shopId: shopId
+            };
+            
+            if (isAdmin) {
+                shopData.name = document.getElementById('shopName').value;
+            }
+            
+            try {
+                const response = await fetch('/api/shop/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        settings: settings,
+                        ...shopData
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(window.t('alert_settings_saved'));
+                    document.getElementById('shopNameDisplay').textContent = `🏪 ${data.shop.name}`;
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert(window.t('alert_save_error'));
+            }
+        }
+
+        function openPreview() {
+            window.open('/preview.html?shop=' + shopId, '_blank');
+        }
+
+        async function logout() {
+            if (!confirm(window.t('alert_logout_confirm'))) return;
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

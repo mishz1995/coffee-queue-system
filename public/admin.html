@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Order Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/i18n.js"></script>
+
+    <style>
+        body { background: var(--bg-dark-color); font-family: var(--font-family); padding: 20px; }
+        .admin-container { max-width: 1200px; margin: 0 auto; }
+        .header { background: var(--bg-dark2-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; color: white; }
+        .header h1 { font-size: 24px; font-weight: 800; color: white; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-dark2-color); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; transition: background 0.3s ease; }
+        .stat-card .number { font-size: 32px; font-weight: 800; color: var(--primary-color); }
+        .stat-card .label { font-size: 14px; color: #94a3b8; }
+        .shop-table { background: var(--bg-dark2-color); border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; transition: background 0.3s ease; }
+        .shop-table table { width: 100%; border-collapse: collapse; }
+        .shop-table th { text-align: start; padding: 12px; border-bottom: 2px solid #e2e8f0; color: var(--darkText); font-size: 14px; }
+        .shop-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; color: var(--darkText); }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; }
+        .badge.active { background: #d1fae5; color: #065f46; }
+        .badge.inactive { background: #fee2e2; color: #991b1b; }
+        .badge.admin { background: #dbeafe; color: #1e40af; }
+        .btn { padding: 6px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s ease; }
+        .btn-toggle { background: #F59E0B; color: white; }
+        .btn-toggle:hover { background: #D97706; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
+        .btn-settings { background: var(--button-color); color: white; }
+        .btn-settings:hover { opacity: 0.9; }
+        .btn-preview { background: #10b981; color: white; }
+        .btn-preview:hover { background: #059669; }
+        .btn-logout { background: #64748b; color: white; padding: 10px 24px; }
+        .btn-logout:hover { background: #475569; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 9999; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--bg-dark-color);box-shadow: #d1fae5 0px 30px 80px; border-radius: 16px; padding: 32px; max-width: 500px; width: 100%; }
+        .modal-content h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--darkText); }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--darkText); margin-bottom: 4px; }
+        .form-group input { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: var(--bg-dark-color); color: var(--darkText); }
+        .form-group input:focus { outline: none; border-color: var(--primary-color); }
+        .form-actions { display: flex; gap: 12px; margin-top: 16px; }
+        .btn-submit { background: var(--button-color); color: white; padding: 10px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; }
+        .btn-cancel { background: #e2e8f0; color: #475569; padding: 10px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .loading-text { text-align: center; color: #94a3b8; padding: 20px; }
+        .qr-link { color: var(--primary-color); text-decoration: none; font-size: 12px; }
+        .qr-link:hover { text-decoration: underline; }
+        .shop-logo-small { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color); vertical-align: middle; margin-inline-end: 8px; }
+        .action-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- الهيدر -->
+        <div class="header">
+            <div>
+                <h1 data-i18n="admin_title">🏢 لوحة التحكم الرئيسية</h1>
+                <p style="color: rgba(255,255,255,0.85); font-size: 14px;" data-i18n="admin_subtitle">إدارة جميع الاشتراكات</p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="openAddShopModal()" class="btn btn-toggle" style="padding: 10px 24px;" data-i18n="admin_add_shop">➕ إضافة مشترك</button>
+                <button onclick="logout()" class="btn btn-logout" data-i18n="logout">🚪 خروج</button>
+            </div>
+        </div>
+
+        <!-- الإحصائيات -->
+        <div class="stats">
+            <div class="stat-card"><div class="number" id="totalShops">0</div><div class="label" data-i18n="admin_total_shops">إجمالي الاشتركات</div></div>
+            <div class="stat-card"><div class="number" id="activeShops" style="color:#10b981;">0</div><div class="label" data-i18n="admin_active_shops">الاشتراكات النشطة</div></div>
+            <div class="stat-card"><div class="number" id="inactiveShops" style="color:#ef4444;">0</div><div class="label" data-i18n="admin_inactive_shops">الاشتراكات الموقفة</div></div>
+        </div>
+
+        <!-- قائمة المقاهي -->
+        <div class="shop-table">
+            <h2 style="font-weight: 700; margin-bottom: 16px; color: var(--darkText);" data-i18n="admin_shops_list">📋 قائمة المشتركين</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th data-i18n="admin_logo">الشعار</th>
+                        <th data-i18n="admin_brand_name">اسم العلامة</th>
+                        <th data-i18n="admin_username">اسم المستخدم</th>
+                        <th data-i18n="admin_qr_link">رابط QR</th>
+                        <th data-i18n="admin_status">الحالة</th>
+                        <th data-i18n="admin_actions">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="shopsList">
+                    <tr><td colspan="6" class="loading-text" data-i18n="admin_loading">⏳ جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- مودال إضافة مقهى -->
+    <div class="modal" id="addShopModal">
+        <div class="modal-content">
+            <h2 data-i18n="add_shop_title">➕ إضافة مشترك جديد</h2>
+            <form id="addShopForm" onsubmit="addShop(event)">
+                <div class="form-group">
+                    <label data-i18n="add_shop_name" style="color: var(--darkText);">اسم العلامة</label>
+                    <input type="text" id="shopName" style="background: var(--bg-dark-color); color: var(--darkText);" data-i18n-placeholder="add_shop_name_placeholder" placeholder="Coffee Shop" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="add_shop_username" style="color: var(--darkText);">اسم المستخدم</label>
+                    <input type="text" id="shopUsername" style="background: var(--bg-dark-color); color: var(--darkText);" data-i18n-placeholder="add_shop_username_placeholder" placeholder="coffee_shop" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="add_shop_password" style="color: var(--darkText);">كلمة المرور</label>
+                    <input type="text" id="shopPassword" style="background: var(--bg-dark-color); color: var(--darkText);" data-i18n-placeholder="add_shop_password_placeholder" placeholder="********" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="add_shop_google_maps" style="color: var(--darkText);">رابط تقييم Google Maps</label>
+                    <input type="url" id="shopGoogleMaps" style="background: var(--bg-dark-color); color: var(--darkText);" data-i18n-placeholder="add_shop_google_maps_placeholder" placeholder="https://g.page/.../review">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit" data-i18n="add_shop_submit">✅ إضافة</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddShopModal()" data-i18n="cancel">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ====== جلب قائمة المقاهي ======
+        async function loadShops() {
+            try {
+                const response = await fetch('/api/admin/shops');
+                const data = await response.json();
+                if (data.success) {
+                    renderShops(data.shops);
+                    updateStats(data.shops);
+                }
+            } catch (error) {
+                console.error('Error loading shops:', error);
+                document.getElementById('shopsList').innerHTML = `
+                    <tr><td colspan="6" style="text-align:center; color:#ef4444; padding:20px;">${window.t('admin_data_error')}</td></tr>
+                `;
+            }
+        }
+
+        // ====== عرض المقاهي ======
+        function renderShops(shops) {
+            const tbody = document.getElementById('shopsList');
+            if (!shops || shops.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">${window.t('admin_no_shops')}</td></tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = shops.map(shop => {
+                const isAdmin = shop.isAdmin || false;
+                const qrUrl = shop.id && shop.id !== 'shop_admin' ? `/qr?shop=${shop.id}` : '#';
+                const logoUrl = shop.logo || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ctext y=\'.9em\' font-size=\'80\'%3E☕%3C/text%3E%3C/svg%3E';
+                
+                return `
+                <tr>
+                    <td><img src="${logoUrl}" alt="Logo" class="shop-logo-small"></td>
+                    <td style="font-weight:600;">${shop.name} ${isAdmin ? `<span class="badge admin">${window.t('admin_admin')}</span>` : ''}</td>
+                    <td style="color:#64748b;">${shop.username}</td>
+                    <td style="font-size:12px;">
+                        ${!isAdmin ? 
+                            `<a href="${qrUrl}" target="_blank" class="qr-link">${window.t('admin_open_qr')}</a>` : 
+                            '<span style="color:#94a3b8;">—</span>'}
+                    </td>
+                    <td>
+                        <span class="badge ${shop.isActive ? 'active' : 'inactive'}">
+                            ${shop.isActive ? window.t('admin_active') : window.t('admin_inactive')}
+                        </span>
+                    </td>
+                    <td>
+                        ${!isAdmin ? `
+                            <div class="action-buttons">
+                                <button onclick="toggleShop('${shop.id}')" class="btn btn-toggle">
+                                    ${shop.isActive ? '⏸️' : '▶️'}
+                                </button>
+                                <button onclick="deleteShop('${shop.id}')" class="btn btn-delete">🗑️</button>
+                                <button onclick="openPreview('${shop.id}')" class="btn btn-preview">👁️</button>
+                                <button onclick="openShopSettings('${shop.id}')" class="btn btn-settings">⚙️</button>
+                            </div>
+                        ` : `
+                            <span style="color:#94a3b8; font-size:12px;">${window.t('admin_not_editable')}</span>
+                        `}
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        // ====== تحديث الإحصائيات ======
+        function updateStats(shops) {
+            const total = shops.length;
+            const active = shops.filter(s => s.isActive).length;
+            const inactive = total - active;
+            
+            document.getElementById('totalShops').textContent = total;
+            document.getElementById('activeShops').textContent = active;
+            document.getElementById('inactiveShops').textContent = inactive;
+        }
+
+        function openShopSettings(shopId) {
+            window.open(`/settings.html?shop=${shopId}`, '_blank');
+        }
+
+        function openPreview(shopId) {
+            window.open(`/preview.html?shop=${shopId}`, '_blank');
+        }
+
+        async function toggleShop(shopId) {
+            if (!confirm(window.t('alert_toggle_confirm'))) return;
+            
+            try {
+                const response = await fetch(`/api/admin/shops/${shopId}/toggle`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    loadShops();
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error toggling shop:', error);
+                alert(window.t('add_shop_error'));
+            }
+        }
+
+        async function deleteShop(shopId) {
+            if (!confirm(window.t('alert_delete_confirm'))) return;
+            
+            try {
+                const response = await fetch(`/api/admin/shops/${shopId}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    loadShops();
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting shop:', error);
+                alert(window.t('add_shop_error'));
+            }
+        }
+
+        function openAddShopModal() {
+            document.getElementById('addShopModal').classList.add('show');
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopUsername').value = '';
+            document.getElementById('shopPassword').value = '';
+            document.getElementById('shopGoogleMaps').value = '';
+        }
+
+        function closeAddShopModal() {
+            document.getElementById('addShopModal').classList.remove('show');
+        }
+
+        async function addShop(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('shopName').value.trim();
+            const username = document.getElementById('shopUsername').value.trim();
+            const password = document.getElementById('shopPassword').value.trim();
+            const googleMapsUrl = document.getElementById('shopGoogleMaps').value.trim();
+            
+            if (!name || !username || !password) {
+                alert(window.t('add_shop_empty'));
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/shops', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, username, password, googleMapsUrl })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeAddShopModal();
+                    loadShops();
+                    alert(window.t('add_shop_success'));
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error adding shop:', error);
+                alert(window.t('add_shop_error'));
+            }
+        }
+
+        async function logout() {
+            if (!confirm(window.t('alert_logout_confirm'))) return;
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        document.getElementById('addShopModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddShopModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadShops();
+        });
+    </script>
+</body>
+</html>

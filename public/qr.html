@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>QR Screen - Order Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/i18n.js"></script>
+    <script>
+        window.hideLanguageButton = true;
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            background: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: var(--font-family);
+            transition: background 0.3s ease;
+        }
+        
+        /* ====== الحاوية الرئيسية (تتكيف مع الوضع) ====== */
+        .screen-container {
+            background: #0f172a;
+            border-radius: 32px;
+            width: 100%;
+            height: auto;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* ====== الوضع الرأسي (Portrait) - نسبة 3:4 ====== */
+        @media (orientation: portrait) {
+            .screen-container {
+                aspect-ratio: 3 / 4;
+                max-width: 90vw;
+                max-height: 90vh;
+                width: auto;
+                height: 90vh;
+            }
+        }
+        
+        /* ====== الوضع الأفقي (Landscape) - نسبة 4:3 ====== */
+        @media (orientation: landscape) {
+            .screen-container {
+                aspect-ratio: 4 / 3;
+                max-width: 90vw;
+                max-height: 90vh;
+                width: 90vw;
+                height: auto;
+            }
+        }
+        
+        /* ====== شاشة البانر ====== */
+        .banner-screen {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+        }
+        
+        .banner-screen.hidden {
+            display: none;
+        }
+        
+        .banner-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 32px;
+            display: block;
+            background: #0f172a;
+        }
+        
+        /* ====== شاشة QR ====== */
+        .qr-screen {
+            display: none;
+            padding: 30px 20px;
+            width: 100%;
+            height: 100%;
+            background: var(--card-color);
+            border-radius: 32px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: background 0.3s ease;
+        }
+        
+        .qr-screen.active {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .qr-large img {
+            width: 220px;
+            height: 220px;
+            margin: 12px auto;
+            border-radius: 16px;
+            background: white;
+            padding: 10px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .order-number-display {
+            font-size: 40px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        .status-badge.waiting { background: #fef3c7; color: #92400e; }
+        .status-badge.preparing { background: #fef3c7; color: #92400e; }
+        .status-badge.ready { background: #d1fae5; color: #065f46; animation: pulse 1.5s infinite; }
+        .status-badge.completed { background: #f1f5f9; color: #64748b; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* ====== شريط اسم المقهى ====== */
+        .shop-name-display {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(231, 13, 13, 0);
+            backdrop-filter: blur(5px);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .shop-name-display img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        /* ====== شعار الزاوية ====== */
+        .corner-logo {
+            position: absolute;
+            top: 20px;
+            inset-inline-end: 20px;
+            z-index: 10;
+        }
+        
+        .corner-logo img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            background: white;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* ====== الوضع الرأسي - أحجام أكبر ====== */
+        @media (orientation: portrait) {
+            .qr-large img { width: 260px; height: 260px; }
+            .order-number-display { font-size: 46px; }
+            .corner-logo img { width: 70px; height: 70px; }
+        }
+        
+        /* ====== الوضع الأفقي - أحجام مناسبة ====== */
+        @media (orientation: landscape) {
+            .qr-large img { width: 200px; height: 200px; }
+            .order-number-display { font-size: 38px; }
+            .corner-logo img { width: 60px; height: 60px; }
+            .qr-screen { padding: 20px 30px; }
+        }
+        
+        /* ====== iPad محدد (768px - 1024px) ====== */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .screen-container { border-radius: 40px; }
+            .banner-screen { border-radius: 40px; }
+            .banner-image { border-radius: 40px; }
+            .qr-screen { border-radius: 40px; }
+        }
+        
+        /* ====== الجوال ====== */
+        @media (max-width: 640px) {
+            body { padding: 10px; }
+            
+            @media (orientation: portrait) {
+                .screen-container {
+                    max-width: 100vw;
+                    height: 95vh;
+                }
+            }
+            
+            @media (orientation: landscape) {
+                .screen-container {
+                    max-height: 95vh;
+                    width: 95vw;
+                }
+            }
+            
+            .qr-large img { width: 180px; height: 180px; }
+            .order-number-display { font-size: 32px; }
+            .shop-name-display { font-size: 13px; padding: 8px 18px; top: 12px; }
+            .shop-name-display img { width: 28px; height: 28px; }
+            .corner-logo img { width: 50px; height: 50px; }
+            .corner-logo { top: 12px; inset-inline-end: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- شريط اسم المقهى -->
+    <div class="shop-name-display" id="shopNameDisplay">
+        <img id="shopLogoTop" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E☕%3C/text%3E%3C/svg%3E" alt="Logo" style="display:none;">
+        <span id="shopNameText"> جاري التحميل...</span>
+    </div>
+
+    <div class="screen-container" id="mainContainer">
+        <div class="banner-screen" id="bannerScreen">
+            <img id="bannerImage" class="banner-image" src="" alt="Banner">
+        </div>
+
+        <div class="qr-screen" id="qrScreen">
+            <div class="corner-logo">
+                <img id="shopLogoCorner" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E☕%3C/text%3E%3C/svg%3E" alt="Logo" style="display:none;">
+            </div>
+            
+            <h2 style="font-size:24px; font-weight:700; color:var(--text-color); margin:0;" data-i18n="qr_order">☕ رمز الطلب</h2>
+            <p style="color:#94a3b8; font-size:14px;" data-i18n="qr_subtitle">اطبع أو اعرض هذا الرمز للعميل</p>
+            <div class="qr-large">
+                <img id="qrDisplayImage" src="" alt="QR Code">
+            </div>
+            <div class="order-number-display" id="qrOrderNumber">#0000</div>
+            <div class="status-badge waiting" id="qrStatusBadge">⏳ في الانتظار</div>
+            <p style="color:#94a3b8; font-size:12px; margin-top:12px;" data-i18n="qr_auto_update">🔄 سيتم التحديث تلقائياً عند مسح الرمز</p>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopId = urlParams.get('shop');
+        let socket = null;
+        let currentOrder = null;
+        let shopName = '';
+
+        const bannerScreen = document.getElementById('bannerScreen');
+        const qrScreen = document.getElementById('qrScreen');
+        const bannerImage = document.getElementById('bannerImage');
+        const shopNameText = document.getElementById('shopNameText');
+        const shopLogoTop = document.getElementById('shopLogoTop');
+        const shopLogoCorner = document.getElementById('shopLogoCorner');
+
+        function applySettings(settings, logo) {
+            const root = document.documentElement;
+            
+            if (settings.primaryColor) root.style.setProperty('--primary-color', settings.primaryColor);
+            if (settings.secondaryColor) root.style.setProperty('--secondary-color', settings.secondaryColor);
+            if (settings.backgroundColor) root.style.setProperty('--bg-color', settings.backgroundColor);
+            if (settings.textColor) root.style.setProperty('--text-color', settings.textColor);
+            if (settings.cardColor) root.style.setProperty('--card-color', settings.cardColor);
+            if (settings.buttonColor) root.style.setProperty('--button-color', settings.buttonColor);
+            if (settings.headerColor) root.style.setProperty('--header-color', settings.headerColor);
+            if (settings.borderRadius) root.style.setProperty('--border-radius', settings.borderRadius);
+            if (settings.fontFamily) root.style.setProperty('--font-family', settings.fontFamily);
+            
+            if (settings.darkMode) {
+                document.body.classList.add('dark-mode');
+                if (settings.darkBackground) root.style.setProperty('--bg-color', settings.darkBackground);
+                if (settings.darkText) root.style.setProperty('--text-color', settings.darkText);
+                if (settings.darkCard) root.style.setProperty('--card-color', settings.darkCard);
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            if (logo) {
+                shopLogoTop.src = logo + '?t=' + Date.now();
+                shopLogoTop.style.display = 'inline-block';
+                shopLogoCorner.src = logo + '?t=' + Date.now();
+                shopLogoCorner.style.display = 'block';
+            }
+        }
+
+        async function loadShopInfo() {
+            if (!shopId) {
+                shopNameText.textContent = '⚠️ Please specify shop';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/shop-info/${shopId}`);
+                const data = await response.json();
+                if (data.success) {
+                    shopName = data.shop.name;
+                    shopNameText.textContent = ` ${shopName}`;
+                    
+                    if (data.shop.settings) {
+                        applySettings(data.shop.settings, data.shop.logo);
+                    } else if (data.shop.logo) {
+                        shopLogoTop.src = data.shop.logo + '?t=' + Date.now();
+                        shopLogoTop.style.display = 'inline-block';
+                        shopLogoCorner.src = data.shop.logo + '?t=' + Date.now();
+                        shopLogoCorner.style.display = 'block';
+                    }
+                    
+                    if (data.shop.bannerImage) {
+                        bannerImage.src = data.shop.bannerImage + '?t=' + Date.now();
+                        bannerImage.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading shop info:', error);
+            }
+        }
+
+        function showBanner() {
+            bannerScreen.classList.remove('hidden');
+            qrScreen.classList.remove('active');
+        }
+
+        function showQR(order) {
+            bannerScreen.classList.add('hidden');
+            qrScreen.classList.add('active');
+            
+            if (order) {
+                document.getElementById('qrDisplayImage').src = order.qrCode || '';
+                document.getElementById('qrOrderNumber').textContent = `#${order.number}`;
+                
+                const badge = document.getElementById('qrStatusBadge');
+                badge.className = 'status-badge';
+                const statusMap = {
+                    'waiting': { class: 'waiting', text: window.t('qr_waiting') },
+                    'preparing': { class: 'preparing', text: window.t('qr_preparing') },
+                    'ready': { class: 'ready', text: window.t('qr_ready') },
+                    'completed': { class: 'completed', text: window.t('qr_completed') }
+                };
+                const s = statusMap[order.status] || statusMap['waiting'];
+                badge.classList.add(s.class);
+                badge.textContent = s.text;
+            }
+        }
+
+        function updateDisplay(order) {
+            if (!order) { showBanner(); return; }
+            if (order.status === 'completed') { showBanner(); return; }
+            if (order.status !== 'waiting') { showBanner(); return; }
+            if (order.status === 'waiting') { showQR(order); }
+        }
+
+        function initSocket() {
+            socket = io({ withCredentials: true });
+            
+            socket.on('connect', () => {
+                if (shopId) {
+                    socket.emit('join-shop', shopId);
+                    fetch(`/api/orders/active`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success && data.orders && data.orders.length > 0) {
+                                const latestOrder = data.orders[data.orders.length - 1];
+                                if (latestOrder.status !== 'completed') {
+                                    currentOrder = latestOrder;
+                                    updateDisplay(latestOrder);
+                                }
+                            }
+                        })
+                        .catch(() => {});
+                }
+            });
+
+            socket.on('new-order-created', (order) => {
+                if (order.shopId === shopId) {
+                    currentOrder = order;
+                    updateDisplay(order);
+                }
+            });
+
+            socket.on('order-status-update', (order) => {
+                if (order.shopId === shopId) {
+                    if (currentOrder && currentOrder.id === order.id) {
+                        currentOrder = order;
+                        updateDisplay(order);
+                    } else if (!currentOrder) {
+                        currentOrder = order;
+                        updateDisplay(order);
+                    }
+                }
+            });
+
+            socket.on('banner-updated', (data) => {
+                if (data.imageUrl) {
+                    bannerImage.src = data.imageUrl + '?t=' + Date.now();
+                    bannerImage.style.display = 'block';
+                }
+            });
+
+            socket.on('settings-updated', (settings) => {
+                if (settings) applySettings(settings, null);
+            });
+
+            socket.on('logo-updated', (data) => {
+                if (data.logoUrl) {
+                    shopLogoTop.src = data.logoUrl + '?t=' + Date.now();
+                    shopLogoTop.style.display = 'inline-block';
+                    shopLogoCorner.src = data.logoUrl + '?t=' + Date.now();
+                    shopLogoCorner.style.display = 'block';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!shopId) {
+                shopNameText.textContent = '⚠️ Please specify shop (?shop=ID)';
+                bannerImage.style.display = 'none';
+                return;
+            }
+            
+            loadShopInfo();
+            initSocket();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (socket) socket.disconnect();
+        });
+    </script>
+</body>
+</html>
