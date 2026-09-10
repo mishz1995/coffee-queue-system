@@ -197,35 +197,6 @@
             }
         }
 
-        function showInAppNotification(title, message, type = 'info') {
-            const existing = document.querySelectorAll('.in-app-notification');
-            existing.forEach(el => el.remove());
-            
-            const notification = document.createElement('div');
-            notification.className = `in-app-notification ${type}`;
-            const icons = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' };
-            
-            notification.innerHTML = `
-                <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-                    <span style="font-size:28px;">${icons[type] || '📢'}</span>
-                    <div style="text-align:start;">
-                        <div class="notif-title">${title}</div>
-                        <div class="notif-body">${message}</div>
-                    </div>
-                </div>
-                <button class="notif-close" onclick="this.parentElement.remove()">✕</button>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.style.animation = 'slideUp 0.3s ease';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, 8000);
-        }
-
         function updateStatus(status, message) {
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText2');
@@ -292,16 +263,10 @@
             setTimeout(() => { body.style.background = ''; }, 700);
         }
 
+        // ====== تنبيه الصوت والاهتزاز فقط (بدون إشعار منبثق) ======
         function playNotificationWithAlert() {
             playSound();
             triggerVibration();
-            if (orderData && orderData.status === 'ready') {
-                showInAppNotification(
-                    window.t('customer_ready_notification'),
-                    `${window.t('customer_order_number')} ${orderData.number}`,
-                    'success'
-                );
-            }
         }
 
         async function setupPushNotifications() {
@@ -336,29 +301,7 @@
                 orderData = order;
                 updateUI(order);
                 
-                if (oldStatus && oldStatus !== order.status) {
-                    const statusMessages = {
-                        'waiting': window.t('customer_status_waiting_msg'),
-                        'preparing': window.t('customer_status_preparing_msg'),
-                        'ready': window.t('customer_status_ready_msg'),
-                        'completed': window.t('customer_status_completed_msg')
-                    };
-                    const titles = {
-                        'waiting': window.t('customer_status_waiting'),
-                        'preparing': window.t('customer_status_preparing'),
-                        'ready': window.t('customer_ready_notification'),
-                        'completed': window.t('customer_status_completed')
-                    };
-                    
-                    if (order.status !== 'completed') {
-                        showInAppNotification(
-                            titles[order.status] || 'Update',
-                            statusMessages[order.status] || '',
-                            order.status === 'ready' ? 'success' : 'info'
-                        );
-                    }
-                }
-                
+                // ====== عند تغيير الحالة إلى "ready" → صوت + اهتزاز فقط ======
                 if (order.status === 'ready' && !notificationPlayed) {
                     playNotificationWithAlert();
                     notificationPlayed = true;
