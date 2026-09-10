@@ -1,0 +1,34 @@
+{
+  "shops": [
+    {
+      "id": "shop_admin",
+      "name": "mishz",
+      "username": "admin",
+      "password": "123",
+      "isActive": true,
+      "isAdmin": true,
+      "googleMapsUrl": "",
+      "bannerImage": "/uploads/shop_admin/banner.jpg",
+      "logo": "/uploads/shop_admin/logo.jpg",
+      "phone": "",
+      "address": "",
+      "workingHours": "",
+      "settings": {
+        "primaryColor": "#f59e0b",
+        "secondaryColor": "#667eea",
+        "backgroundColor": "#f8fafc",
+        "textColor": "#1e293b",
+        "cardColor": "#ffffff",
+        "buttonColor": "#667eea",
+        "headerColor": "#1e293b",
+        "darkMode": true,
+        "darkBackground": "#0f172a",
+        "darkText": "#f1f5f9",
+        "darkCard": "#1e293b",
+        "fontFamily": "Inter",
+        "borderRadius": "16px"
+      },
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
