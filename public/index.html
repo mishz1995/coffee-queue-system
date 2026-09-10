@@ -107,10 +107,6 @@
                     </button>
                 </div>
             </div>
-
-            <button onclick="resetSession()" class="btn-reset" style="margin-top: 20px;" data-i18n="customer_new_order">
-                طلب جديد
-            </button>
         </div>
     </div>
 
@@ -128,6 +124,7 @@
         let notificationPlayed = false;
         let shopGoogleMapsUrl = 'https://g.page/your-coffee-shop/review';
 
+        // ====== تطبيق الإعدادات ======
         function applySettings(settings, logo) {
             const root = document.documentElement;
             
@@ -157,6 +154,7 @@
             }
         }
 
+        // ====== جلب معلومات المقهى ======
         async function loadShopInfo() {
             if (!shopId) return;
             try {
@@ -455,15 +453,29 @@
             }
         }
 
-        function resetSession() {
-            window.location.href = '/';
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            loadShopInfo();
+        // ====== بدء التشغيل ======
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('📱 Page loaded');
+            console.log('📱 Order ID:', orderId);
+            console.log('📱 Shop ID:', shopId);
+            
+            await loadShopInfo();
             
             if (orderId) {
                 localStorage.setItem('currentOrder', JSON.stringify({ id: orderId }));
+                
+                // ====== جلب بيانات الطلب مباشرة ======
+                try {
+                    const response = await fetch(`/api/order/${orderId}`);
+                    const data = await response.json();
+                    if (data.success && data.order) {
+                        orderData = data.order;
+                        updateUI(data.order);
+                    }
+                } catch (error) {
+                    console.error('Error fetching order:', error);
+                }
+                
                 setTimeout(() => setupPushNotifications(), 1000);
                 initSocket();
                 updateStatus('success', 'Ready');
@@ -480,9 +492,9 @@
                 document.getElementById('loadingScreen').innerHTML = `
                     <div style="padding:32px; text-align:center;">
                         <div style="font-size:64px; margin-bottom:16px;">☕</div>
-                        <h2 style="font-size:24px; font-weight:700; color:var(--text-color); margin-bottom:8px;" data-i18n="customer_welcome">${window.t('customer_welcome')}</h2>
-                        <p style="color:#94a3b8;" data-i18n="customer_no_order">${window.t('customer_no_order')}</p>
-                        <p style="color:#94a3b8; font-size:14px; margin-top:8px;" data-i18n="customer_scan_qr">${window.t('customer_scan_qr')}</p>
+                        <h2 style="font-size:24px; font-weight:700; color:var(--text-color); margin-bottom:8px;">${window.t('customer_welcome')}</h2>
+                        <p style="color:#94a3b8;">${window.t('customer_no_order')}</p>
+                        <p style="color:#94a3b8; font-size:14px; margin-top:8px;">${window.t('customer_scan_qr')}</p>
                     </div>
                 `;
             }
